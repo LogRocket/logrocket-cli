@@ -1,0 +1,10 @@
+{
+  "presets": [
+    "babel-preset-es2015",
+    "stage-3"
+  ],
+  "plugins": [
+    "transform-runtime",
+    "add-module-exports"
+  ]
+}

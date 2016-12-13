@@ -1,0 +1,52 @@
+{
+  "name": "logrocket-cli",
+  "version": "0.9.1",
+  "description": "Command line tool for [LogRocket](https://logrocket.com/).",
+  "main": "index.js",
+  "author": "Logrocket <support@logrocket.com> (https://logrocket.com/)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LogRocket/logrocket-cli"
+  },
+  "files": [
+    "bin/",
+    "dist/"
+  ],
+  "bin": {
+    "logrocket": "./bin/logrocket"
+  },
+  "scripts": {
+    "build": "babel src --out-dir dist",
+    "test:mocha": "mocha --opts test/mocha.opts dist/**/*.spec.js",
+    "test": "npm run build && npm run test:mocha"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.20.0",
+    "glob": "^7.1.1",
+    "isomorphic-fetch": "^2.1.1",
+    "yargs": "^5.0.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.11.4",
+    "babel-core": "^6.13.0",
+    "babel-eslint": "^7.0.0",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-runtime": "^6.15.0",
+    "babel-polyfill": "^6.13.0",
+    "babel-preset-es2015": "^6.13.2",
+    "babel-preset-stage-3": "^6.17.0",
+    "chai": "^3.5.0",
+    "dirty-chai": "^1.2.2",
+    "eslint": "^3.8.1",
+    "eslint-config-airbnb": "^12.0.0",
+    "eslint-plugin-import": "^1.16.0",
+    "eslint-plugin-jsx-a11y": "^2.2.3",
+    "eslint-plugin-mocha": "^4.7.0",
+    "eslint-plugin-react": "^6.4.1",
+    "fetch-mock": "^5.1.2",
+    "mocha": "^2.5.3",
+    "mocha-circleci-reporter": "0.0.2",
+    "raw-body": "^2.1.7"
+  }
+}
