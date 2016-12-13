@@ -1,6 +1,8 @@
 # LogRocket CLI
 
-The official command line tool for [LogRocket](https://logrocket.com/).
+The official command line tool for [LogRocket](https://logrocket.com/). 
+
+[![CircleCI](https://circleci.com/gh/LogRocket/logrocket-cli.svg?style=shield)](https://circleci.com/gh/LogRocket/logrocket-cli)
 
 ## Requirements
 
