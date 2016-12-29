@@ -21,6 +21,11 @@ yargs // eslint-disable-line no-unused-expressions
     type: 'string',
     describe: false,
   })
+  .option('v', { // for debugging
+    alias: 'verbose',
+    boolean: true,
+    describe: false,
+  })
   .commandDir('commands')
   .help()
   .demand(1, 'Missing command, expected `release` or `upload`')

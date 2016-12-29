@@ -15,7 +15,7 @@ export const builder = (args) => {
     .help();
 };
 
-export const handler = async ({ version, strict, apikey, apihost }) => {
+export const handler = async ({ version, strict, apikey, apihost, verbose }) => {
   console.info(`Creating release: ${version} ...`);
 
   const client = apiClient({ apikey, apihost });
@@ -30,7 +30,7 @@ export const handler = async ({ version, strict, apikey, apihost }) => {
 
   if (!res.ok && res.status !== 409) {
     console.error(`Could not create release: ${version}`);
-    await formatError(res);
+    await formatError(res, { verbose });
   }
 
   console.info('Success!');

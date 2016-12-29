@@ -33,7 +33,7 @@ export const builder = (args) => {
 };
 
 export const handler = async (args) => {
-  const { path, release, apikey, apihost } = args;
+  const { path, release, apikey, apihost, verbose } = args;
 
   console.info(`Preparing to upload sourcemaps for release ${release} ...`);
   console.info('Gathering file list...');
@@ -70,7 +70,7 @@ export const handler = async (args) => {
 
       if (!res.ok) {
         console.error(`Failed to upload: ${file}`);
-        await formatError(res);
+        await formatError(res, { verbose });
       }
     } catch (err) {
       console.error(err.message);
