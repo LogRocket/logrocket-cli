@@ -5,11 +5,11 @@ import apiClient from '../apiClient';
 import formatError from '../formatError';
 import glob from 'glob';
 
-export const command = 'upload <path>';
+export const command = 'upload <paths..>';
 export const describe = 'Upload JavaScript sourcemaps for a release';
 export const builder = (args) => {
   args
-    .usage('\nUsage: logrocket upload -r <release> <path>')
+    .usage('\nUsage: logrocket upload -r <release> <paths..>')
     .option('r', {
       alias: 'release',
       type: 'string',
@@ -32,8 +32,40 @@ export const builder = (args) => {
     .help('help');
 };
 
+async function gatherFiles(paths) {
+  const map = [];
+
+  await Promise.all(paths.map((path) => {
+    const realPath = join(cwd(), path);
+
+    if (statSync(realPath).isFile()) {
+      map.push({
+        path: realPath,
+        name: basename(realPath),
+      });
+
+      return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+      glob('**/*.{js,jsx,js.map}', { cwd: realPath }, async (err, files) => {
+        for (const file of files) {
+          map.push({
+            path: join(realPath, file),
+            name: file,
+          });
+        }
+
+        resolve();
+      });
+    });
+  }));
+
+  return map;
+}
+
 export const handler = async (args) => {
-  const { path, release, apikey, apihost, verbose } = args;
+  const { paths, release, apikey, apihost, verbose } = args;
 
   console.info(`Preparing to upload sourcemaps for release ${release} ...`);
   console.info('Gathering file list...');
@@ -48,28 +80,20 @@ export const handler = async (args) => {
     });
   }
 
-  let root;
-  const isFile = statSync(path).isFile();
-
-  if (isFile) {
-    root = join(cwd(), dirname(path));
-  } else {
-    root = join(cwd(), path);
-  }
-
-  const uploadFile = async (file) => {
-    console.info(`Uploading: ${file}`);
+  const uploadFile = async ({ path, name }) => {
+    console.info(`Uploading: ${name}`);
 
     const data = {
       release,
-      filepath: `*/${file}`,
-      contents: createReadStream(join(root, file)),
+      filepath: `*/${name}`,
+      contents: createReadStream(path),
     };
+
     try {
       const res = await client.uploadFile(data);
 
       if (!res.ok) {
-        console.error(`Failed to upload: ${file}`);
+        console.error(`Failed to upload: ${name}`);
         await formatError(res, { verbose });
       }
     } catch (err) {
@@ -78,19 +102,13 @@ export const handler = async (args) => {
     }
   };
 
-  if (isFile) {
-    uploadFile(basename(path)).then(() => {
-      console.info('Done.');
-    });
-  } else {
-    glob('**/*.{js,jsx,js.map}', { cwd: root }, async (err, files) => {
-      console.info(`Found ${files.length} files ...`);
+  const fileList = await gatherFiles(paths);
 
-      for (const file of files) {
-        await uploadFile(file);
-      }
+  console.info(`Found ${fileList.length} file${fileList.length === 1 ? '' : 's'} ...`);
 
-      console.info('Success!');
-    });
+  for (const fileInfo of fileList) {
+    await uploadFile(fileInfo);
   }
+
+  console.info('Success!');
 };

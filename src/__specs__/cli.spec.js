@@ -306,6 +306,7 @@ describe('CLI dispatch tests', function cliTests() {
     const result = await executeCommand(`upload -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" ${FIXTURE_PATH}subdir/one.js`);
 
     expect(result.err).to.be.null();
+    expect(result.stdout).to.contain('Found 1 file');
     expect(matchedRequests).to.have.length(3);
     expect(unmatchedRequests).to.have.length(0);
 
@@ -319,6 +320,40 @@ describe('CLI dispatch tests', function cliTests() {
 
     expect(u1.method).to.equal('PUT');
     expect(u1.body).to.equal('\'one js contents\';\n');
+  }));
+
+  it('should upload the passed files', mochaAsync(async () => {
+    addCliStatusMessage();
+    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
+      status: 200,
+      body: { signed_url: 'http://localhost:8818/upload/' },
+    });
+
+    addExpectRequest('/upload/', { status: 200 });
+
+    const result = await executeCommand(`upload -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" ${FIXTURE_PATH}subdir/one.js ${FIXTURE_PATH}two.jsx`);
+
+    expect(result.err).to.be.null();
+    expect(result.stdout).to.contain('Found 2 files');
+    expect(matchedRequests).to.have.length(5);
+    expect(unmatchedRequests).to.have.length(0);
+
+    const [s, r1, u1, r2, u2] = matchedRequests;
+    expect(s.method).to.equal('GET');
+
+    expect(r1.method).to.equal('POST');
+    expect(r1.headers).to.have.property('authorization', 'Token org:app:secret');
+    expect(r1.body).to.equal('{"filepath":"*/one.js"}');
+
+    expect(u1.method).to.equal('PUT');
+    expect(u1.body).to.equal('\'one js contents\';\n');
+
+    expect(r2.method).to.equal('POST');
+    expect(r2.headers).to.have.property('authorization', 'Token org:app:secret');
+    expect(r2.body).to.equal('{"filepath":"*/two.jsx"}');
+
+    expect(u2.method).to.equal('PUT');
+    expect(u2.body).to.equal('\'two jsx contents\';\n');
   }));
 
   it('should error if the server ping fails', mochaAsync(async () => {
