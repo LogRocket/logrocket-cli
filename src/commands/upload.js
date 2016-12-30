@@ -1,4 +1,4 @@
-import { join, dirname, basename } from 'path';
+import { join, basename } from 'path';
 import { cwd } from 'process';
 import { createReadStream, statSync } from 'fs';
 import apiClient from '../apiClient';
