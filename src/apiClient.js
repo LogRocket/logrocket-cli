@@ -4,7 +4,7 @@ import { version as cliVersion } from '../package.json';
 class ApiClient {
   constructor({
     apikey,
-    apihost = 'http://api.logrocket.com',
+    apihost = 'https://api.logrocket.com',
   }) {
     this.apikey = apikey;
     this.apihost = apihost;
