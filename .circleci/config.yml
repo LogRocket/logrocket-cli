@@ -11,11 +11,11 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - npm-cache-{{ checksum "package.json" }}
+            - npm-cache-{{ checksum "package-lock.json" }}
             - npm-cache-
       - run: npm install
       - save_cache:
-          key: npm-cache-{{ checksum "package.json" }}
+          key: npm-cache-{{ checksum "package-lock.json" }}
           paths:
             - node_modules
       - run: npm run lint
