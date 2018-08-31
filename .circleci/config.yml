@@ -28,7 +28,7 @@ jobs:
             echo "source ~/.nvm/nvm.sh --no-use" >> $BASH_ENV
       - run: nvm install 6 && nvm use 6 && npm run test:mocha
       - run: rm -rf dist/__specs__
-      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> .npmrc
       - persist_to_workspace:
           root: ~/project
           paths: 
