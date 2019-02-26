@@ -38,7 +38,7 @@ describe('CLI apiClient tests', () => {
 
     await client.uploadFile({
       release: '1.0.2',
-      filepath: '*/path.js',
+      filepath: '~/path.js',
       contents: 'stuff!',
     });
 
@@ -47,7 +47,7 @@ describe('CLI apiClient tests', () => {
 
     const tt = fetchMock.lastOptions('troytown');
     expect(tt.headers).to.have.property('Authorization', 'Token org:app:key');
-    expect(tt.body).to.equal('{"filepath":"*/path.js"}');
+    expect(tt.body).to.equal('{"filepath":"~/path.js"}');
 
     const gCloud = fetchMock.lastOptions('gcloud');
     expect(gCloud.body).to.equal('stuff!');

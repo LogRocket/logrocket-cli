@@ -16,6 +16,12 @@ export const builder = (args) => {
       describe: 'The release version for these files',
       demand: 'You must specify a release, use -r or --release',
     })
+    .option('p', {
+      alias: 'urlPrefix',
+      type: 'string',
+      default: '~/',
+      describe: 'Sets a URL prefix in front of all files. Defaults to "~/"',
+    })
     .demand(1, 'Missing upload path: e.g. logrocket upload -r 1.2.3 dist/')
     .option('gcs-token', { // for testing, pass the webhook token to get an immediate pending=no
       type: 'string',
@@ -65,7 +71,7 @@ async function gatherFiles(paths) {
 }
 
 export const handler = async (args) => {
-  const { paths, release, apikey, apihost, verbose } = args;
+  const { paths, release, apikey, apihost, verbose, urlPrefix } = args;
 
   console.info(`Preparing to upload sourcemaps for release ${release} ...`);
   console.info('Gathering file list...');
@@ -83,9 +89,11 @@ export const handler = async (args) => {
   const uploadFile = async ({ path, name }) => {
     console.info(`Uploading: ${name}`);
 
+    const filepath = `${urlPrefix.replace(/\/$/, '')}/${name}`;
+
     const data = {
       release,
-      filepath: `*/${name}`,
+      filepath,
       contents: createReadStream(path),
     };
 
