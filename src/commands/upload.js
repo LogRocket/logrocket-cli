@@ -114,9 +114,7 @@ export const handler = async (args) => {
 
   console.info(`Found ${fileList.length} file${fileList.length === 1 ? '' : 's'} ...`);
 
-  for (const fileInfo of fileList) {
-    await uploadFile(fileInfo);
-  }
+  await Promise.all(fileList.map(uploadFile));
 
   console.info('Success!');
 };
