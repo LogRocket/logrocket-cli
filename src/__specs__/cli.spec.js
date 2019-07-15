@@ -47,6 +47,16 @@ describe('CLI dispatch tests', function cliTests() {
   };
 
   before(() => {
+    const simplifyRequest = req => {
+      const simplifiedRequest = {
+        method: req.method,
+        body: req.body
+      };
+      if (req.headers && req.headers.authorization) {
+        simplifiedRequest.headers = { authorization: req.headers.authorization };
+      }
+      return simplifiedRequest;
+    };
     server = createServer(async (req, res) => {
       const parts = parse(req.url);
 
@@ -55,7 +65,7 @@ describe('CLI dispatch tests', function cliTests() {
         const req2 = req;
 
         req2.body = body.toString();
-        matchedRequests.push(req2);
+        matchedRequests.push(simplifyRequest(req2));
 
         const request = expectRequests[parts.pathname];
 
@@ -269,29 +279,44 @@ describe('CLI dispatch tests', function cliTests() {
     expect(matchedRequests).to.have.length(6 + 1);
     expect(unmatchedRequests).to.have.length(0);
 
-    const [s, r1, u1, r2, u2, r3, u3] = matchedRequests;
-    expect(s.method).to.equal('GET');
+    expect(matchedRequests[0].method).to.equal('GET');
 
-    expect(r1.method).to.equal('POST');
-    expect(r1.headers).to.have.property('authorization', 'Token org:app:secret');
-    expect(r1.body).to.equal('{"filepath":"~/subdir/one.js"}');
+    expect(matchedRequests).to.deep.include.members([
+      {
+        method: 'POST',
+        headers: {
+          authorization: 'Token org:app:secret',
+        },
+        body: '{"filepath":"~/subdir/one.js"}'
+      },
+      {
+        method: 'POST',
+        headers: {
+          authorization: 'Token org:app:secret',
+        },
+        body: '{"filepath":"~/two.js.map"}'
+      },
+      {
+        method: 'POST',
+        headers: {
+          authorization: 'Token org:app:secret',
+        },
+        body: '{"filepath":"~/two.jsx"}'
+      },
+      {
+        method: 'PUT',
+        body: '\'one js contents\';\n'
+      },
+      {
+        method: 'PUT',
+        body: 'two map contents\n'
+      },
+      {
+        method: 'PUT',
+        body: '\'two jsx contents\';\n'
+      }]
+    );
 
-    expect(u1.method).to.equal('PUT');
-    expect(u1.body).to.equal('\'one js contents\';\n');
-
-    expect(r2.method).to.equal('POST');
-    expect(r2.headers).to.have.property('authorization', 'Token org:app:secret');
-    expect(r2.body).to.equal('{"filepath":"~/two.js.map"}');
-
-    expect(u2.method).to.equal('PUT');
-    expect(u2.body).to.equal('two map contents\n');
-
-    expect(r3.method).to.equal('POST');
-    expect(r3.headers).to.have.property('authorization', 'Token org:app:secret');
-    expect(r3.body).to.equal('{"filepath":"~/two.jsx"}');
-
-    expect(u3.method).to.equal('PUT');
-    expect(u3.body).to.equal('\'two jsx contents\';\n');
   }));
 
   it('should support a custom url prefix', mochaAsync(async () => {
@@ -310,19 +335,29 @@ describe('CLI dispatch tests', function cliTests() {
     expect(matchedRequests).to.have.length(6 + 1);
     expect(unmatchedRequests).to.have.length(0);
 
-    const [s, r1, u1, r2] = matchedRequests;
-    expect(s.method).to.equal('GET');
+    expect(matchedRequests[0].method).to.equal('GET');
 
-    expect(r1.method).to.equal('POST');
-    expect(r1.headers).to.have.property('authorization', 'Token org:app:secret');
-    expect(r1.body).to.equal('{"filepath":"~/public/subdir/one.js"}');
+    expect(matchedRequests).to.deep.include.members([
+      {
+        method: 'POST',
+        headers: {
+          authorization: 'Token org:app:secret'
+        },
+        body: '{"filepath":"~/public/subdir/one.js"}'
+      },
+      {
+        method: 'PUT',
+        body: '\'one js contents\';\n'
+      },
+      {
+        method: 'POST',
+        headers: {
+          authorization: 'Token org:app:secret'
+        },
+        body: '{"filepath":"~/public/two.js.map"}'
+      }
+    ]);
 
-    expect(u1.method).to.equal('PUT');
-    expect(u1.body).to.equal('\'one js contents\';\n');
-
-    expect(r2.method).to.equal('POST');
-    expect(r2.headers).to.have.property('authorization', 'Token org:app:secret');
-    expect(r2.body).to.equal('{"filepath":"~/public/two.js.map"}');
   }));
 
   it('should upload the passed file', mochaAsync(async () => {
@@ -369,22 +404,33 @@ describe('CLI dispatch tests', function cliTests() {
     expect(matchedRequests).to.have.length(5);
     expect(unmatchedRequests).to.have.length(0);
 
-    const [s, r1, u1, r2, u2] = matchedRequests;
-    expect(s.method).to.equal('GET');
+    expect(matchedRequests[0].method).to.equal('GET');
 
-    expect(r1.method).to.equal('POST');
-    expect(r1.headers).to.have.property('authorization', 'Token org:app:secret');
-    expect(r1.body).to.equal('{"filepath":"~/one.js"}');
+    expect(matchedRequests).to.deep.include.members([
+      {
+        method: 'POST',
+        headers: {
+          authorization: 'Token org:app:secret'
+        },
+        body: '{"filepath":"~/one.js"}'
+      },
+      {
+        method: 'PUT',
+        body: '\'one js contents\';\n'
+      },
+      {
+        method: 'POST',
+        headers: {
+          authorization: 'Token org:app:secret'
+        },
+        body: '{"filepath":"~/two.jsx"}'
+      },
+      {
+        method: 'PUT',
+        body: '\'two jsx contents\';\n'
+      }
+    ]);
 
-    expect(u1.method).to.equal('PUT');
-    expect(u1.body).to.equal('\'one js contents\';\n');
-
-    expect(r2.method).to.equal('POST');
-    expect(r2.headers).to.have.property('authorization', 'Token org:app:secret');
-    expect(r2.body).to.equal('{"filepath":"~/two.jsx"}');
-
-    expect(u2.method).to.equal('PUT');
-    expect(u2.body).to.equal('\'two jsx contents\';\n');
   }));
 
   it('should error if the server ping fails', mochaAsync(async () => {
