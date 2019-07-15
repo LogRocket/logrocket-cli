@@ -50,7 +50,7 @@ describe('CLI dispatch tests', function cliTests() {
     const simplifyRequest = req => {
       const simplifiedRequest = {
         method: req.method,
-        body: req.body
+        body: req.body,
       };
       if (req.headers && req.headers.authorization) {
         simplifiedRequest.headers = { authorization: req.headers.authorization };
@@ -287,36 +287,35 @@ describe('CLI dispatch tests', function cliTests() {
         headers: {
           authorization: 'Token org:app:secret',
         },
-        body: '{"filepath":"~/subdir/one.js"}'
+        body: '{"filepath":"~/subdir/one.js"}',
       },
       {
         method: 'POST',
         headers: {
           authorization: 'Token org:app:secret',
         },
-        body: '{"filepath":"~/two.js.map"}'
+        body: '{"filepath":"~/two.js.map"}',
       },
       {
         method: 'POST',
         headers: {
           authorization: 'Token org:app:secret',
         },
-        body: '{"filepath":"~/two.jsx"}'
+        body: '{"filepath":"~/two.jsx"}',
       },
       {
         method: 'PUT',
-        body: '\'one js contents\';\n'
+        body: '\'one js contents\';\n',
       },
       {
         method: 'PUT',
-        body: 'two map contents\n'
+        body: 'two map contents\n',
       },
       {
         method: 'PUT',
-        body: '\'two jsx contents\';\n'
+        body: '\'two jsx contents\';\n',
       }]
     );
-
   }));
 
   it('should support a custom url prefix', mochaAsync(async () => {
@@ -341,23 +340,22 @@ describe('CLI dispatch tests', function cliTests() {
       {
         method: 'POST',
         headers: {
-          authorization: 'Token org:app:secret'
+          authorization: 'Token org:app:secret',
         },
-        body: '{"filepath":"~/public/subdir/one.js"}'
+        body: '{"filepath":"~/public/subdir/one.js"}',
       },
       {
         method: 'PUT',
-        body: '\'one js contents\';\n'
+        body: '\'one js contents\';\n',
       },
       {
         method: 'POST',
         headers: {
-          authorization: 'Token org:app:secret'
+          authorization: 'Token org:app:secret',
         },
-        body: '{"filepath":"~/public/two.js.map"}'
-      }
+        body: '{"filepath":"~/public/two.js.map"}',
+      },
     ]);
-
   }));
 
   it('should upload the passed file', mochaAsync(async () => {
@@ -410,27 +408,26 @@ describe('CLI dispatch tests', function cliTests() {
       {
         method: 'POST',
         headers: {
-          authorization: 'Token org:app:secret'
+          authorization: 'Token org:app:secret',
         },
-        body: '{"filepath":"~/one.js"}'
+        body: '{"filepath":"~/one.js"}',
       },
       {
         method: 'PUT',
-        body: '\'one js contents\';\n'
+        body: '\'one js contents\';\n',
       },
       {
         method: 'POST',
         headers: {
-          authorization: 'Token org:app:secret'
+          authorization: 'Token org:app:secret',
         },
-        body: '{"filepath":"~/two.jsx"}'
+        body: '{"filepath":"~/two.jsx"}',
       },
       {
         method: 'PUT',
-        body: '\'two jsx contents\';\n'
-      }
+        body: '\'two jsx contents\';\n',
+      },
     ]);
-
   }));
 
   it('should error if the server ping fails', mochaAsync(async () => {
