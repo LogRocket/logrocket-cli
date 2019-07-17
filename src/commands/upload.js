@@ -114,8 +114,9 @@ export const handler = async (args) => {
 
   console.info(`Found ${fileList.length} file${fileList.length === 1 ? '' : 's'} ...`);
 
-  for (const fileInfo of fileList) {
-    await uploadFile(fileInfo);
+  const CHUNK_SIZE = 10;
+  for (let i = 0; i < fileList.length; i += CHUNK_SIZE) {
+    await Promise.all(fileList.slice(i, i + CHUNK_SIZE).map(uploadFile));
   }
 
   console.info('Success!');
