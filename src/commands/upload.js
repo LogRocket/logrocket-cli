@@ -44,7 +44,6 @@ export const builder = (args) => {
       type: 'number',
       describe: 'Maximum delay between retries in ms',
       default: 30000,
-      describe: false,
     })
     .help('help');
 };
