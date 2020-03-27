@@ -11,6 +11,7 @@ export const builder = (args) => {
       describe: 'Fail on duplicate releases',
       default: false,
     })
+    .string('_')
     .demand(1, 'Missing release version: e.g. logrocket release 1.2.3')
     .help();
 };
