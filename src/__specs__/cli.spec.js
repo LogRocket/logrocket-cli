@@ -169,6 +169,22 @@ describe('CLI dispatch tests', function cliTests() {
     expect(req.body).to.equal('{"version":"1.0.3"}');
   }));
 
+  it('should not convert the release version to a number', mochaAsync(async () => {
+    addCliStatusMessage();
+    addExpectRequest('/v1/orgs/org/apps/app/releases/', { status: 200 });
+
+    const result = await executeCommand('release -k org:app:secret --apihost="http://localhost:8818" 81444e2');
+
+    expect(result.err).to.be.null();
+    expect(matchedRequests).to.have.length(2);
+    expect(unmatchedRequests).to.have.length(0);
+
+    const req = matchedRequests[1];
+    expect(req.method).to.equal('POST');
+    expect(req.headers).to.have.property('authorization', 'Token org:app:secret');
+    expect(req.body).to.equal('{"version":"81444e2"}');
+  }));
+
   it('should ignore duplicate releases', mochaAsync(async () => {
     addCliStatusMessage();
     addExpectRequest('/v1/orgs/org/apps/app/releases/', { status: 200 });
