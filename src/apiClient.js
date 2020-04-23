@@ -1,6 +1,32 @@
 import 'isomorphic-fetch';
 import { version as cliVersion } from '../package.json';
 
+const delay = t => new Promise(resolve => setTimeout(resolve, t));
+
+const RETRY_STATUS = [429, 500, 502, 503, 504];
+
+async function retryableFetch(url, { maxRetries, maxRetryDelay, ...options }) {
+  let result = await fetch(url, options);
+
+  if (result.ok || !RETRY_STATUS.includes(result.status)) {
+    return result;
+  }
+
+  for (let currentRetry = 0; currentRetry < maxRetries; currentRetry++) {
+    const jitterMs = Math.round(Math.random() * 1000);
+    const wait = Math.min(maxRetryDelay, Math.pow(2, currentRetry) * 1000) + jitterMs;
+    await delay(wait);
+
+    result = await fetch(url, options);
+
+    if (result.ok || !RETRY_STATUS.includes(result.status)) {
+      break;
+    }
+  }
+
+  return result;
+}
+
 class ApiClient {
   constructor({
     apikey,
@@ -62,7 +88,7 @@ class ApiClient {
     });
   }
 
-  async uploadFile({ release, filepath, contents }) {
+  async uploadFile({ release, filepath, contents, maxRetries, maxRetryDelay }) {
     const res = await this._makeRequest({
       url: `releases/${release}/artifacts`,
       data: { filepath },
@@ -79,7 +105,9 @@ class ApiClient {
       throw new Error(`Could not get upload url for: ${filepath}`);
     }
 
-    const result = fetch(gcloudUrl, {
+    const result = await retryableFetch(gcloudUrl, {
+      maxRetries,
+      maxRetryDelay,
       method: 'PUT',
       body: contents,
     });

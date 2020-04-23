@@ -6,7 +6,8 @@ import getRawBody from 'raw-body';
 const CLI_INDEX = './bin/logrocket';
 const FIXTURE_PATH = './test/fixtures/';
 
-const executeCommand = async (cmd, { env = '' } = {}) => {
+const executeCommand = async (cmdAsStringOrArray, { env = '' } = {}) => {
+  const cmd = Array.isArray(cmdAsStringOrArray) ? cmdAsStringOrArray.join(' ') : cmdAsStringOrArray;
   return new Promise(resolve => {
     exec(
       `${env} ${CLI_INDEX} ${cmd}`,
@@ -26,11 +27,24 @@ describe('CLI dispatch tests', function cliTests() {
   let matchedRequests;
 
   const addExpectRequest = (url, opts) => {
-    expectRequests[url] = {
+    if (!expectRequests[url]) {
+      expectRequests[url] = [];
+    }
+
+    expectRequests[url].push({
       body: {},
       status: 200,
       ...opts,
-    };
+    });
+  };
+
+  const addArtifactRequest = () => {
+    const uploadID = (100000 + Math.floor(Math.random() * 999999)).toString(16);
+    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
+      status: 200,
+      body: { signed_url: `http://localhost:8818/upload/${uploadID}` },
+    });
+    addExpectRequest(`/upload/${uploadID}`, { status: 200 });
   };
 
   const addCliStatusMessage = ({ message = '', status = 204 } = {}) => {
@@ -59,15 +73,16 @@ describe('CLI dispatch tests', function cliTests() {
     };
     server = createServer(async (req, res) => {
       const parts = parse(req.url);
+      const expected = expectRequests[parts.pathname] || [];
 
-      if (expectRequests[parts.pathname]) {
+      if (expected && expected.length) {
         const body = await getRawBody(req);
         const req2 = req;
 
         req2.body = body.toString();
         matchedRequests.push(simplifyRequest(req2));
 
-        const request = expectRequests[parts.pathname];
+        const request = expected.shift();
 
         res.writeHead(request.status, { 'Content-Type': 'application/json' });
         res.write(JSON.stringify(request.body));
@@ -281,12 +296,10 @@ describe('CLI dispatch tests', function cliTests() {
 
   it('should upload the passed directory', mochaAsync(async () => {
     addCliStatusMessage();
-    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
-      status: 200,
-      body: { signed_url: 'http://localhost:8818/upload/' },
-    });
 
-    addExpectRequest('/upload/', { status: 200 });
+    addArtifactRequest();
+    addArtifactRequest();
+    addArtifactRequest();
 
     const result = await executeCommand(`upload -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" ${FIXTURE_PATH}`);
 
@@ -336,12 +349,10 @@ describe('CLI dispatch tests', function cliTests() {
 
   it('should support a custom url prefix', mochaAsync(async () => {
     addCliStatusMessage();
-    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
-      status: 200,
-      body: { signed_url: 'http://localhost:8818/upload/' },
-    });
 
-    addExpectRequest('/upload/', { status: 200 });
+    addArtifactRequest();
+    addArtifactRequest();
+    addArtifactRequest();
 
     const result = await executeCommand(`upload -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" ${FIXTURE_PATH} --url-prefix="~/public"`);
 
@@ -376,12 +387,8 @@ describe('CLI dispatch tests', function cliTests() {
 
   it('should upload the passed file', mochaAsync(async () => {
     addCliStatusMessage();
-    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
-      status: 200,
-      body: { signed_url: 'http://localhost:8818/upload/' },
-    });
 
-    addExpectRequest('/upload/', { status: 200 });
+    addArtifactRequest();
 
     const result = await executeCommand(`upload -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" ${FIXTURE_PATH}subdir/one.js`);
 
@@ -404,12 +411,9 @@ describe('CLI dispatch tests', function cliTests() {
 
   it('should upload the passed files', mochaAsync(async () => {
     addCliStatusMessage();
-    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
-      status: 200,
-      body: { signed_url: 'http://localhost:8818/upload/' },
-    });
 
-    addExpectRequest('/upload/', { status: 200 });
+    addArtifactRequest();
+    addArtifactRequest();
 
     const result = await executeCommand(`upload -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" ${FIXTURE_PATH}subdir/one.js ${FIXTURE_PATH}two.jsx`);
 
@@ -454,5 +458,61 @@ describe('CLI dispatch tests', function cliTests() {
 
     expect(result.err.code).to.equal(1);
     expect(result.stderr).to.contain('Some error to show');
+  }));
+
+  it('should retry failed uploads', mochaAsync(async () => {
+    addCliStatusMessage();
+
+    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
+      status: 200,
+      body: { signed_url: 'http://localhost:8818/upload/' },
+    });
+    addExpectRequest('/upload/', { status: 429 });
+    addExpectRequest('/upload/', { status: 500 });
+    addExpectRequest('/upload/', { status: 502 });
+    addExpectRequest('/upload/', { status: 503 });
+    addExpectRequest('/upload/', { status: 504 });
+    addExpectRequest('/upload/', { status: 200 });
+
+    const result = await executeCommand([
+      'upload',
+      '-k org:app:secret',
+      '-r 1.0.2',
+      '--apihost="http://localhost:8818"',
+      '--max-retries 5',
+      '--max-retry-delay 100',
+      `${FIXTURE_PATH}subdir/one.js`,
+    ]);
+
+    expect(result.err).to.be.null();
+    expect(result.stdout).to.contain('Found 1 file');
+    expect(matchedRequests).to.have.length(8);
+    expect(unmatchedRequests).to.have.length(0);
+  }));
+
+  it('should stop retrying after the configured maximum', mochaAsync(async () => {
+    addCliStatusMessage();
+
+    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
+      status: 200,
+      body: { signed_url: 'http://localhost:8818/upload/' },
+    });
+    addExpectRequest('/upload/', { status: 429 });
+    addExpectRequest('/upload/', { status: 500 });
+
+    const result = await executeCommand([
+      'upload',
+      '-k org:app:secret',
+      '-r 1.0.2',
+      '--apihost="http://localhost:8818"',
+      '--max-retries 1',
+      '--max-retry-delay 100',
+      `${FIXTURE_PATH}subdir/one.js`,
+    ]);
+
+    expect(result.err.message).to.contain('Failed to upload: one.js');
+    expect(result.stdout).to.contain('Found 1 file');
+    expect(matchedRequests).to.have.length(4);
+    expect(unmatchedRequests).to.have.length(0);
   }));
 });
