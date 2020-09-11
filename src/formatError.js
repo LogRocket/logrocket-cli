@@ -1,9 +1,16 @@
+import ResponseStatusMessage from './responseStatusMessage';
+
 export default async function formatError(res, { verbose = false } = {}) {
   if (res.status < 300) {
     return;
   }
 
-  console.error(`${res.status} ${res.statusText}`);
+  console.error(
+    new ResponseStatusMessage({
+      code: res.status,
+      text: res.statusText,
+    }).toString()
+  );
 
   const body = await res.text();
 
