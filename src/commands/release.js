@@ -17,6 +17,9 @@ export const builder = (args) => {
 };
 
 export const handler = async ({ version, strict, apikey, apihost, verbose }) => {
+  if (!version) throw new Error('Missing release version');
+  if (!apikey) throw new Error('Missing api key');
+
   console.info(`Creating release: ${version} ...`);
 
   const client = apiClient({ apikey, apihost });
