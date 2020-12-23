@@ -21,7 +21,6 @@ class ApiClient {
 
   async _makeRequest({ url, data }) {
     const [orgSlug, appSlug] = this.apikey.split(':');
-
     return fetch(`${this.apihost}/v1/orgs/${orgSlug}/apps/${appSlug}/${url}/`, {
       method: 'POST',
       headers: this.headers,
