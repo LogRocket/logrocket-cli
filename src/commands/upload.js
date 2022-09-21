@@ -35,6 +35,16 @@ export const builder = (args) => {
       'gcs-token': 'gcs-bucket',
       'gcs-bucket': 'gcs-token',
     })
+    .option('max-retries', {
+      type: 'number',
+      describe: 'Failed upload retry limit (0 disables)',
+      default: 0,
+    })
+    .option('max-retry-delay', {
+      type: 'number',
+      describe: 'Maximum delay between retries in ms',
+      default: 30000,
+    })
     .help('help');
 };
 
@@ -95,6 +105,8 @@ export const handler = async (args) => {
       release,
       filepath,
       contents: createReadStream(path),
+      maxRetries: args['max-retries'],
+      maxRetryDelay: args['max-retry-delay'],
     };
 
     try {
