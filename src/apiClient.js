@@ -52,6 +52,7 @@ class ApiClient {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify(data),
+      duplex: 'half',
     });
   }
 
@@ -110,6 +111,7 @@ class ApiClient {
       maxRetryDelay,
       method: 'PUT',
       body: contents,
+      duplex: 'half',
     });
 
     if (this._gcsBucket) {
@@ -123,6 +125,7 @@ class ApiClient {
           name: fileData.name,
           bucket: this._gcsBucket,
         }),
+        duplex: 'half',
       });
     }
 
