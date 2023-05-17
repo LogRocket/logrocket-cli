@@ -1,6 +1,6 @@
 {
   "name": "logrocket-cli",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "Command line tool for [LogRocket](https://logrocket.com/).",
   "main": "index.js",
   "author": "Logrocket <support@logrocket.com> (https://logrocket.com/)",
