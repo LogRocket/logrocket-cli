@@ -66,10 +66,13 @@ async function gatherFiles(paths) {
     return new Promise(resolve => {
       glob('**/*.{js,jsx,js.map}', { cwd: realPath }, async (err, files) => {
         for (const file of files) {
-          map.push({
-            path: join(realPath, file),
-            name: file,
-          });
+          const filePath = join(realPath, file);
+          if (statSync(filePath).isFile()) {
+            map.push({
+              path: filePath,
+              name: file,
+            });
+          }
         }
 
         resolve();
