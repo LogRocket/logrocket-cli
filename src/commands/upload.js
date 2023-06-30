@@ -81,7 +81,14 @@ async function gatherFiles(paths) {
 }
 
 export const handler = async (args) => {
-  const { paths, release, apikey, apihost, verbose, urlPrefix } = args;
+  const { release, apikey, apihost, verbose, urlPrefix = '' } = args;
+  let { paths } = args;
+  if (!release) throw new Error('Missing release version');
+  if (!paths) throw new Error('Missing paths');
+  if (!apikey) throw new Error('Missing api key');
+  if (typeof paths === 'string') {
+    paths = [paths];
+  }
 
   console.info(`Preparing to upload sourcemaps for release ${release} ...`);
   console.info('Gathering file list...');
