@@ -33,14 +33,7 @@ const LOAD_COMMAND_BYTES = 8;
 function readBytes(fd, position, length) {
   return new Promise((resolve, reject) => {
     const output = Buffer.alloc(length);
-    read(fd, output, 0, length, position, (err, _, buffer) => {
-      if (err) {
-        console.error(err);
-        reject(err);
-      } else {
-        resolve(buffer);
-      }
-    });
+    read(fd, { buffer: output, length, position }, () => resolve(output));
   });
 }
 
