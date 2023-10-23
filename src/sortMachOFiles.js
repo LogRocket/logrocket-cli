@@ -19,16 +19,16 @@ const ARCH_NAMES = {
 };
 
 const LC_UUID = 0x1b;
-const uuidBytes = 16;
+const UUID_BYTES = 16;
 
-const magicBytes = 4;
-const machHeaderBytes = 28;
-const mach64HeaderBytes = 32;
+const MAGIC_NUMBER_BYTES = 4;
+const MACH_HEADER_BYTES = 28;
+const MACH_64_HEADER_BYTES = 32;
 
-const fatArchBytes = 20;
-const fatHeaderBytes = 8;
+const FAT_ARCH_BYTES = 20;
+const FAT_HEADER_BYTES = 8;
 
-const loadCommandBytes = 8;
+const LOAD_COMMAND_BYTES = 8;
 
 function readBytes(fd, position, length) {
   return new Promise((resolve, reject) => {
@@ -104,7 +104,7 @@ async function getArchEntries(fd, archOffset, magic, archName = null) {
   const entries = [];
 
   const isMach64Header = getIsMach64Header(magic);
-  const headerSize = isMach64Header ? mach64HeaderBytes : machHeaderBytes;
+  const headerSize = isMach64Header ? MACH_64_HEADER_BYTES : MACH_HEADER_BYTES;
   const shouldSwap = shouldSwapBytes(magic);
   const headerBuffer = await readBytes(fd, archOffset, headerSize);
 
@@ -113,11 +113,11 @@ async function getArchEntries(fd, archOffset, magic, archName = null) {
 
   let offset = archOffset + headerSize;
   for (let i = 0; i < ncmds; i++) {
-    const loadCommandBuffer = await readBytes(fd, offset, loadCommandBytes);
+    const loadCommandBuffer = await readBytes(fd, offset, LOAD_COMMAND_BYTES);
     const loadCommand = getLoadCommand(loadCommandBuffer, shouldSwap);
 
     if (loadCommand.cmd === LC_UUID) {
-      const uuidBuffer = await readBytes(fd, offset + loadCommandBytes, uuidBytes);
+      const uuidBuffer = await readBytes(fd, offset + LOAD_COMMAND_BYTES, UUID_BYTES);
       entries.push({
         uuid: uuidBuffer.toString('hex'),
         arch,
@@ -138,20 +138,20 @@ export default async function getEntries(filepath) {
         console.error(err);
         reject(err);
       }
-      let magicBuffer = await readBytes(fd, 0, magicBytes);
+      let magicBuffer = await readBytes(fd, 0, MAGIC_NUMBER_BYTES);
       let magic = getMagic(magicBuffer);
       if (getIsMultiArch(magic)) {
         const fileEntries = [];
-        const headerBuffer = await readBytes(fd, 0, fatHeaderBytes);
+        const headerBuffer = await readBytes(fd, 0, FAT_HEADER_BYTES);
         const numArchs = getNumArchs(headerBuffer);
 
-        let offset = fatHeaderBytes;
+        let offset = FAT_HEADER_BYTES;
         for (let i = 0; i < numArchs; i++) {
-          const fatArchBuffer = await readBytes(fd, offset, fatArchBytes);
+          const fatArchBuffer = await readBytes(fd, offset, FAT_ARCH_BYTES);
           const { cpuType, archOffset } = getArchDetails(fatArchBuffer);
-          offset += fatArchBytes;
+          offset += FAT_ARCH_BYTES;
 
-          magicBuffer = await readBytes(fd, archOffset, magicBytes);
+          magicBuffer = await readBytes(fd, archOffset, MAGIC_NUMBER_BYTES);
           magic = getMagic(magicBuffer);
           const archEntries = await getArchEntries(fd, archOffset, magic, ARCH_NAMES[cpuType]);
           fileEntries.push(...archEntries);
