@@ -49,7 +49,7 @@ function getMagic(buffer) {
   return view.getUint32(0);
 }
 
-function getIs64(magic) {
+function getIsMach64Header(magic) {
   return magic === MH_MAGIC_64 || magic === MH_CIGAM_64;
 }
 
@@ -103,8 +103,8 @@ function getLoadCommand(buffer, shouldSwap) {
 async function getArchEntries(fd, archOffset, magic, archName = null) {
   const entries = [];
 
-  const is64 = getIs64(magic);
-  const headerSize = is64 ? mach64HeaderBytes : machHeaderBytes;
+  const isMach64Header = getIsMach64Header(magic);
+  const headerSize = isMach64Header ? mach64HeaderBytes : machHeaderBytes;
   const shouldSwap = shouldSwapBytes(magic);
   const headerBuffer = await readBytes(fd, archOffset, headerSize);
 
