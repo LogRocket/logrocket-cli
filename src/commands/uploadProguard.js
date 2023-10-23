@@ -10,7 +10,7 @@ export const command = 'upload-proguard <path>';
 export const describe = 'Upload ProGuard for an android release';
 export const builder = uploadBuilderBuilder('-proguard');
 
-export default async function handler(args) {
+export const handler = async (args) => {
   const { path, release, apikey, apihost, verbose } = args;
 
   console.info(`Preparing to upload ProGuard mapping for release ${release} ...`);

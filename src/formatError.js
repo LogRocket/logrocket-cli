@@ -1,4 +1,4 @@
-export default async function formatError(res, { verbose = false } = {}) {
+export async function formatError(res, { verbose = false } = {}) {
   if (res.status < 300) {
     return;
   }

@@ -1,7 +1,7 @@
 import { createReadStream } from 'fs';
-import apiClient from '../apiClient';
-import formatError from '../formatError';
-import gatherFiles from '../gatherFiles';
+import { apiClient } from '../apiClient';
+import { formatError } from '../formatError';
+import { gatherFiles } from '../gatherFiles';
 import { uploadBuilderBuilder } from '../uploadBuilderBuilder';
 
 

@@ -1,16 +1,16 @@
 import { createReadStream } from 'fs';
 import apiClient from '../apiClient.js';
 import formatError from '../formatError.js';
-import gatherFiles from '../gatherFiles.js';
+import { gatherFiles } from '../gatherFiles';
 import { uploadBuilderBuilder } from '../uploadBuilderBuilder.js';
-import getEntries from '../sortMachOFiles.js';
+import { getEntries } from '../sortMachOFiles';
 
 
 export const command = 'uploadv2 <paths..>';
 export const describe = 'Upload iOS sourcemaps for a release';
 export const builder = uploadBuilderBuilder('v2');
 
-export default async function handler(args) {
+export const handler = async (args) => {
   const { paths, release, apikey, apihost, verbose } = args;
 
   console.info(`Preparing to upload debug file(s) for release ${release} ...`);

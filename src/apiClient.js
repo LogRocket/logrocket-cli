@@ -151,6 +151,6 @@ class ApiClient {
   }
 }
 
-export default function apiClient(config) {
+export function apiClient(config) {
   return new ApiClient(config);
 }

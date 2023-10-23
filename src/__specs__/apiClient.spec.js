@@ -1,5 +1,5 @@
 import fetchMock from 'fetch-mock';
-import apiClient from '../apiClient';
+import { apiClient } from '../apiClient';
 
 describe('CLI apiClient tests', () => {
   let client;

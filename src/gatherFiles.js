@@ -32,7 +32,7 @@ function getFilesRecursively(path, {
   }
 }
 
-export default async function gatherFiles(paths, {
+export async function gatherFiles(paths, {
   globString = '**/*.{js,jsx,js.map}',
 } = {}) {
   const map = [];

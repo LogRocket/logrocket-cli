@@ -124,7 +124,7 @@ async function getArchEntries(fd, archOffset, magic, archName = null) {
   return entries;
 }
 
-export default async function getEntries(filepath) {
+export async function getEntries(filepath) {
   return new Promise((resolve, reject) => {
     open(filepath, async (err, fd) => {
       if (err) {

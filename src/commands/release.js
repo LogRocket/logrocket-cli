@@ -1,5 +1,5 @@
-import apiClient from '../apiClient';
-import formatError from '../formatError';
+import { apiClient } from '../apiClient';
+import { formatError } from '../formatError';
 
 export const command = 'release <version>';
 export const describe = 'Create a new release';
