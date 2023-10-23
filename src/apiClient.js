@@ -98,11 +98,14 @@ class ApiClient {
         url: `releases/${release}/artifacts`,
         data: { filepath },
       });
-    } else {
+    } else if (version === 2) {
       res = await this._makeRequest({
         url: 'release-artifacts',
         data: { filepath, release },
       });
+    } else {
+      console.error(`Unkown uploadFile version number: ${version}`);
+      return;
     }
 
     if (!res.ok) {
