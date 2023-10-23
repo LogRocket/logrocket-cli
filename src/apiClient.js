@@ -1,7 +1,7 @@
 import 'isomorphic-fetch';
 import { version as cliVersion } from '../package.json';
 
-const delay = t => new Promise(resolve => setTimeout(resolve, t));
+const delay = t => new Promise(resolve => setTimeout(() => resolve(), t));
 
 const RETRY_STATUS = [429, 500, 502, 503, 504];
 
@@ -89,11 +89,21 @@ class ApiClient {
     });
   }
 
-  async uploadFile({ release, filepath, contents, maxRetries, maxRetryDelay }) {
-    const res = await this._makeRequest({
-      url: `releases/${release}/artifacts`,
-      data: { filepath },
-    });
+  async uploadFile({
+    release, filepath, contents, maxRetries, maxRetryDelay, version = 1,
+  }) {
+    let res;
+    if (version === 1) {
+      res = await this._makeRequest({
+        url: `releases/${release}/artifacts`,
+        data: { filepath },
+      });
+    } else {
+      res = await this._makeRequest({
+        url: 'release-artifacts',
+        data: { filepath, release },
+      });
+    }
 
     if (!res.ok) {
       return res;

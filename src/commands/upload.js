@@ -1,84 +1,13 @@
-import { join, basename } from 'path';
-import { cwd } from 'process';
-import { createReadStream, statSync } from 'fs';
+import { createReadStream } from 'fs';
 import apiClient from '../apiClient';
 import formatError from '../formatError';
-import glob from 'glob';
+import gatherFiles from '../gatherFiles';
+import { uploadBuilderBuilder } from '../uploadBuilderBuilder';
+
 
 export const command = 'upload <paths..>';
 export const describe = 'Upload JavaScript sourcemaps for a release';
-export const builder = (args) => {
-  args
-    .usage('\nUsage: logrocket upload -r <release> <paths..>')
-    .option('r', {
-      alias: 'release',
-      type: 'string',
-      describe: 'The release version for these files',
-      demand: 'You must specify a release, use -r or --release',
-    })
-    .option('p', {
-      alias: 'urlPrefix',
-      type: 'string',
-      default: '~/',
-      describe: 'Sets a URL prefix in front of all files. Defaults to "~/"',
-    })
-    .demand(1, 'Missing upload path: e.g. logrocket upload -r 1.2.3 dist/')
-    .option('gcs-token', { // for testing, pass the webhook token to get an immediate pending=no
-      type: 'string',
-      describe: false,
-    })
-    .option('gcs-bucket', { // for testing, pass the webhook bucket to get an immediate pending=no
-      type: 'string',
-      describe: false,
-    })
-    .implies({
-      'gcs-token': 'gcs-bucket',
-      'gcs-bucket': 'gcs-token',
-    })
-    .option('max-retries', {
-      type: 'number',
-      describe: 'Failed upload retry limit (0 disables)',
-      default: 0,
-    })
-    .option('max-retry-delay', {
-      type: 'number',
-      describe: 'Maximum delay between retries in ms',
-      default: 30000,
-    })
-    .help('help');
-};
-
-async function gatherFiles(paths) {
-  const map = [];
-
-  await Promise.all(paths.map((path) => {
-    const realPath = join(cwd(), path);
-
-    if (statSync(realPath).isFile()) {
-      map.push({
-        path: realPath,
-        name: basename(realPath),
-      });
-
-      return Promise.resolve();
-    }
-
-    return new Promise(resolve => {
-      glob('**/*.{js,jsx,js.map}', { cwd: realPath }, async (err, files) => {
-        for (const file of files) {
-          map.push({
-            path: join(realPath, file),
-            name: file,
-          });
-        }
-
-        resolve();
-      });
-    });
-  }));
-
-  return map;
-}
+export const builder = uploadBuilderBuilder('');
 
 export const handler = async (args) => {
   const { paths, release, apikey, apihost, verbose, urlPrefix } = args;
