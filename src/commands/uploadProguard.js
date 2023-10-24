@@ -1,6 +1,6 @@
 import { createReadStream, statSync } from 'fs';
-import apiClient from '../apiClient.js';
-import formatError from '../formatError.js';
+import { apiClient } from '../apiClient.js';
+import { formatError } from '../formatError.js';
 import { uploadBuilderBuilder } from '../uploadBuilderBuilder.js';
 import { basename, join } from 'path';
 import { cwd } from 'process';

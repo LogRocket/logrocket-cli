@@ -1,6 +1,6 @@
 import { createReadStream } from 'fs';
-import apiClient from '../apiClient.js';
-import formatError from '../formatError.js';
+import { apiClient } from '../apiClient.js';
+import { formatError } from '../formatError.js';
 import { gatherFiles } from '../gatherFiles';
 import { uploadBuilderBuilder } from '../uploadBuilderBuilder.js';
 import { getEntries } from '../sortMachOFiles';
