@@ -129,7 +129,7 @@ class ApiClient {
 
     if (this._gcsBucket) {
       await fetch(`${this.apihost}/gcloud/`, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Channel-Token': this._gcsToken,
