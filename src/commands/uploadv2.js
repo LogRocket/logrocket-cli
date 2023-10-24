@@ -80,7 +80,7 @@ export const handler = async (args) => {
     return new Promise(async resolve => {
       const fileArchEntries = await getMachOArchs(path);
       resolve(fileArchEntries.map(entry => ({ ...entry, name, path })));
-    })
+    });
   }));
   const archEntries = archEntriesLists.flat();
   console.info(`Found ${archEntries.length} total build architecture mappings`);

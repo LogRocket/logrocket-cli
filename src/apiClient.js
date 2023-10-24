@@ -104,8 +104,7 @@ class ApiClient {
         data: { filepath, release },
       });
     } else {
-      console.error(`Unkown uploadFile version number: ${version}`);
-      return;
+      throw new Error(`Unkown uploadFile version number: ${version}`);
     }
 
     if (!res.ok) {

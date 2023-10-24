@@ -33,7 +33,13 @@ const LOAD_COMMAND_BYTES = 8;
 function readBytes(fd, position, length) {
   return new Promise((resolve, reject) => {
     const output = Buffer.alloc(length);
-    read(fd, { buffer: output, length, position }, (err) => err ? reject(err) : resolve(output));
+    read(fd, { buffer: output, length, position }, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(output);
+      }
+    });
   });
 }
 
@@ -102,7 +108,7 @@ async function getArchEntry(fd, archOffset, magic, archName = null) {
   try {
     headerBuffer = await readBytes(fd, archOffset, headerSize);
   } catch (err) {
-    throw ['Error reading header', err]
+    throw new Error(`Error reading header\n${err}`);
   }
 
   let cpuType;
@@ -110,7 +116,7 @@ async function getArchEntry(fd, archOffset, magic, archName = null) {
   try {
     ({ cpuType, ncmds } = getHeaderVals(headerBuffer, shouldSwap));
   } catch (err) {
-    throw ['Error parsing cpuType and ncmds', err];
+    throw new Error(`Error parsing cpuType and ncmds\n${err}`);
   }
   const arch = archName || ARCH_NAMES[cpuType];
 
@@ -121,10 +127,7 @@ async function getArchEntry(fd, archOffset, magic, archName = null) {
       const loadCommandBuffer = await readBytes(fd, offset, LOAD_COMMAND_BYTES);
       loadCommand = getLoadCommand(loadCommandBuffer, shouldSwap);
     } catch (err) {
-      throw [
-        `Error getting load command ${i} of ${ncmds} at offset ${offset}`,
-        err,
-      ]
+      throw new Error(`Error getting load command ${i} of ${ncmds} at offset ${offset}\n${err}`);
     }
 
     if (loadCommand.cmd === LC_UUID) {
@@ -132,7 +135,7 @@ async function getArchEntry(fd, archOffset, magic, archName = null) {
       try {
         uuidBuffer = await readBytes(fd, offset + LOAD_COMMAND_BYTES, UUID_BYTES);
       } catch (err) {
-        throw ['Error reading load command uuid', err];
+        throw new Error(`Error reading load command uuid\n${err}`);
       }
       return {
         uuid: uuidBuffer.toString('hex'),
@@ -150,8 +153,8 @@ export async function getMachOArchs(filepath) {
   return new Promise((resolve, reject) => {
     const rejectWithError = (message, err) => {
       console.error(message, err);
-      reject(err)  
-    } 
+      reject(err);
+    };
     open(filepath, async (err, fd) => {
       if (err) {
         rejectWithError(`Error parsing file ${filepath}`, err);
@@ -220,7 +223,7 @@ export async function getMachOArchs(filepath) {
             archEntry = await getArchEntry(fd, archOffset, magic, archName);
           } catch (err) {
             rejectWithError(
-              `Error parsing arch entry ${i} (${archName}) in mutli-arch mapping ${filepath}`,
+              `Error parsing arch entry ${i} (${archName}) in multi-arch mapping ${filepath}`,
               err
             );
           }
