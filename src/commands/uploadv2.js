@@ -3,7 +3,7 @@ import { apiClient } from '../apiClient.js';
 import { formatError } from '../formatError.js';
 import { gatherFiles } from '../gatherFiles';
 import { uploadBuilderBuilder } from '../uploadBuilderBuilder.js';
-import { getEntries } from '../sortMachOFiles';
+import { getMachOArchs } from '../sortMachOFiles';
 
 
 export const command = 'uploadv2 <paths..>';
@@ -26,65 +26,69 @@ export const handler = async (args) => {
     });
   }
 
-  const uploadFile = async ({ path, name }) => {
-    console.info(`Uploading: ${name}`);
+  const uploadFile = async ({ arch, fileFormat, name, path, uuid }) => {
+    console.info(`Uploading: ${name} ${arch}`);
 
-    const archEntries = await getEntries(path);
+    const containerDirectory = `${uuid.slice(0, 2)}/${uuid.slice(2)}`;
 
-    archEntries.forEach(async ({ uuid, arch, fileFormat }) => {
-      const containerDirectory = `${uuid.slice(0, 2)}/${uuid.slice(2)}`;
+    const debugFilePath = `${containerDirectory}/debuginfo`;
+    const debugFileData = {
+      release,
+      filepath: debugFilePath,
+      contents: createReadStream(path),
+      maxRetries: args['max-retries'],
+      maxRetryDelay: args['max-retry-delay'],
+      version: 2,
+    };
 
-      const debugFilePath = `${containerDirectory}/debuginfo`;
-      const debugFileData = {
-        release,
-        filepath: debugFilePath,
-        contents: createReadStream(path),
-        maxRetries: args['max-retries'],
-        maxRetryDelay: args['max-retry-delay'],
-        version: 2,
-      };
+    const metaFilePath = `${containerDirectory}/meta`;
+    const meta = {
+      name,
+      arch,
+      file_format: fileFormat,
+    };
+    const metaFileData = {
+      release,
+      filepath: metaFilePath,
+      contents: JSON.stringify(meta),
+      maxRetries: args['max-retries'],
+      maxRetryDelay: args['max-retry-delay'],
+      version: 2,
+    };
 
-      const metaFilePath = `${containerDirectory}/meta`;
-      const meta = {
-        name,
-        arch,
-        file_format: fileFormat,
-      };
-      const metaFileData = {
-        release,
-        filepath: metaFilePath,
-        contents: JSON.stringify(meta),
-        maxRetries: args['max-retries'],
-        maxRetryDelay: args['max-retry-delay'],
-        version: 2,
-      };
-
-      try {
-        const debugFileRes = await client.uploadFile(debugFileData);
-        if (!debugFileRes.ok) {
-          console.error(`Failed to upload: ${name}`);
-          await formatError(debugFileRes, { verbose });
-        }
-
-        const metaFileRes = await client.uploadFile(metaFileData);
-        if (!metaFileRes.ok) {
-          console.error(`Failed to upload metadata for ${name}`);
-          await formatError(metaFileRes, { verbose });
-        }
-      } catch (err) {
-        console.error(err.message);
-        process.exit(1);
+    try {
+      const debugFileRes = await client.uploadFile(debugFileData);
+      if (!debugFileRes.ok) {
+        console.error(`Failed to upload: ${name} ${arch}`);
+        await formatError(debugFileRes, { verbose });
       }
-    });
+
+      const metaFileRes = await client.uploadFile(metaFileData);
+      if (!metaFileRes.ok) {
+        console.error(`Failed to upload metadata for ${name} ${arch}`);
+        await formatError(metaFileRes, { verbose });
+      }
+    } catch (err) {
+      console.error(err.message);
+      process.exit(1);
+    }
   };
 
   const fileList = await gatherFiles(paths, { globString: '**/DWARF/*' });
-
   console.info(`Found ${fileList.length} file${fileList.length === 1 ? '' : 's'} ...`);
+  const archEntriesLists = await Promise.all(fileList.map(async ({ name, path }) => {
+    return new Promise(async resolve => {
+      const fileArchEntries = await getMachOArchs(path);
+      resolve(fileArchEntries.map(entry => ({ ...entry, name, path })));
+    })
+  }));
+  const archEntries = archEntriesLists.flat();
+  console.info(`Found ${archEntries.length} total build architecture mappings`);
+
 
   const CHUNK_SIZE = 1;
-  for (let i = 0; i < fileList.length; i += CHUNK_SIZE) {
-    await Promise.all(fileList.slice(i, i + CHUNK_SIZE).map(uploadFile));
+  for (let i = 0; i < archEntries.length; i += CHUNK_SIZE) {
+    await Promise.all(archEntries.slice(i, i + CHUNK_SIZE).map(uploadFile));
   }
 
   console.info('Success!');
