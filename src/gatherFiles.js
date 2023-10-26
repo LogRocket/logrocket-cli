@@ -28,7 +28,9 @@ function getFilesRecursively(path, {
           workingDirectory: fullPath,
         })
       );
-    } catch (e) {} // eslint-disable-line no-empty
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 

@@ -11,19 +11,19 @@ const PLATFORM_UPLOAD = {
   [PLATFORMS.ANDROID]: uploadProguard,
 };
 
-export const command = 'upload-mobile <path(s..)>';
-export const describe = 'Upload debug files for a mobile release';
+export const command = 'upload-mobile <paths..>';
+export const describe = 'Upload debug file(s) for a mobile release';
 
 const sampleiOSUploadPath = '/build/MyApp-iphoneos.xcarchive/dSYMs/MyApp.framework.dSYM/Contents/Resources/';
 const sampleAndroidUploadPath = '/app/build/outputs/mapping/debug/mapping.txt';
-const usageStr = `Usage: logrocket upload-mobile -r <release> -pf <platform> <path(s..)>
+const usageStr = `Usage: logrocket upload-mobile -r <release> -p <platform> <paths..>
 For android, include one path directly to debug file, like \`${sampleAndroidUploadPath}\`
 See android dev docs for information on how to shrink and obfuscate your code https://developer.android.com/build/shrink-code#enable
 `;
 const demandPathStr = `Missing upload path, e.g.
-logrocket upload-mobile -pf ios -r 1.2.3 ${sampleiOSUploadPath}
+logrocket upload-mobile -p ios -r 1.2.3 ${sampleiOSUploadPath}
 -OR-
-logrocket upload-mobile -pf android -r 1.2.3 ${sampleAndroidUploadPath}
+logrocket upload-mobile -p android -r 1.2.3 ${sampleAndroidUploadPath}
 `;
 
 export const builder = (args) => {
@@ -36,11 +36,11 @@ export const builder = (args) => {
       demand: 'You must specify a release, use -r or --release',
     })
     .demand(1, demandPathStr)
-    .option('pf', {
+    .option('p', {
       alias: 'platform',
-      type: 'string',
-      describe: 'The mobile platform of these files, ios|android',
-      demand: 'You must specify a platform (ios|android), use -pf or --platform',
+      choices: ['ios', 'android'],
+      describe: 'The mobile platform of this file (or files)',
+      demand: 'You must specify a platform (ios|android), use -p or --platform',
     })
     .option('gcs-token', { // for testing, pass the webhook token to get an immediate pending=no
       type: 'string',

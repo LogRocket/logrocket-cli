@@ -1,6 +1,7 @@
 import { createReadStream, statSync } from 'fs';
 import { apiClient } from './apiClient.js';
 import { formatError } from './formatError.js';
+import { extname } from 'path';
 
 export const uploadProguard = async (args) => {
   const { path, release, apikey, apihost, verbose } = args;
@@ -28,7 +29,7 @@ export const uploadProguard = async (args) => {
     process.exit(1);
   }
 
-  if (path.substring(path.lastIndexOf('.') + 1) !== '.txt') {
+  if (extname(path) !== '.txt') {
     console.error('ProGuard mapping file must be .txt');
     process.exit(1);
   }
