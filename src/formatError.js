@@ -18,21 +18,7 @@ export async function formatError(res, { verbose = false } = {}) {
       console.error(json.error);
     }
   } catch (err) {
-    try {
-      // retrieves GCS response body to clarify errors encountered when uploading files
-      const resObj = JSON.parse(JSON.stringify(res));
-      if (Array.isArray(resObj._raw)
-        && resObj._raw.length > 0
-        && resObj._raw[0].data
-      ) {
-        console.error(Buffer.from(resObj._raw[0].data).toString('ascii'));
-      } else {
-        console.error('Could not complete request.');
-      }
-    } catch (err) {
       console.error('Could not complete request.');
-    }
   }
-
   process.exit(1);
 }

@@ -15,27 +15,17 @@ export const command = 'upload-mobile <paths..>';
 export const describe = 'Upload debug file(s) for a mobile release';
 
 const sampleiOSUploadPath = '/build/MyApp-iphoneos.xcarchive/dSYMs/MyApp.framework.dSYM/Contents/Resources/';
-const sampleAndroidUploadPath = '/app/build/outputs/mapping/debug/mapping.txt';
-const usageStr = `Usage: logrocket upload-mobile -r <release> -p <platform> <paths..>
-For android, include one path directly to debug file, like \`${sampleAndroidUploadPath}\`
-See android dev docs for information on how to shrink and obfuscate your code https://developer.android.com/build/shrink-code#enable
-`;
-const demandPathStr = `Missing upload path, e.g.
-logrocket upload-mobile -p ios -r 1.2.3 ${sampleiOSUploadPath}
--OR-
-logrocket upload-mobile -p android -r 1.2.3 ${sampleAndroidUploadPath}
-`;
 
 export const builder = (args) => {
   args
-    .usage(usageStr)
+    .usage('Usage: logrocket upload-mobile -r <release> -p <platform> <paths..>')
     .option('r', {
       alias: 'release',
       type: 'string',
       describe: 'The release version for these files',
       demand: 'You must specify a release, use -r or --release',
     })
-    .demand(1, demandPathStr)
+    .demand(1, `Missing upload path, e.g. logrocket upload-mobile -p ios -r 1.2.3 ${sampleiOSUploadPath}`)
     .option('p', {
       alias: 'platform',
       choices: ['ios', 'android'],

@@ -3,8 +3,15 @@ import { apiClient } from './apiClient.js';
 import { formatError } from './formatError.js';
 import { extname } from 'path';
 
+const sampleAndroidUploadPath = '/app/build/outputs/mapping/debug/mapping.txt';
+const pathCountError = `Include one path directly to debug file, like \`${sampleAndroidUploadPath}\`
+See android dev docs for information on how to shrink and obfuscate your code https://developer.android.com/build/shrink-code#enable`;
+
 export const uploadProguard = async (args) => {
   const { paths, release, apikey, apihost, verbose } = args;
+  if (paths.length > 1) {
+    console.error(pathCountError);
+  }
   const path = paths[0];
 
   console.info(`Preparing to upload ProGuard mapping for release ${release} ...`);

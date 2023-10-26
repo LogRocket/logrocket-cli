@@ -57,15 +57,19 @@ function handleFileError(errMessage, err) {
   }
 }
 
-function readBytes(fd, position, length, errMessage) {
+function readBytes(fd, position, length, errMessage, asDataView = true) {
   return new Promise(resolve => {
     const output = Buffer.alloc(length);
     read(fd, { buffer: output, length, position }, (err) => {
       if (err) {
         handleFileError(errMessage, err);
       }
-      const dataView = new DataView(output.buffer);
-      resolve(dataView);
+      if (asDataView) {
+        const dataView = new DataView(output.buffer);
+        resolve(dataView);          
+      } else {
+        resolve(output);
+      }
     });
   });
 }
@@ -162,7 +166,7 @@ async function getArchEntry(fd, magic, archOffset = 0, archNum = null, archName 
 
     if (cmd === LC_UUID) {
       const uuidBuffer = await readBytes(
-        fd, offset + LOAD_COMMAND_BYTES, UUID_BYTES, `Error reading uuid of ${cmdSuffix}`
+        fd, offset + LOAD_COMMAND_BYTES, UUID_BYTES, `Error reading uuid of ${cmdSuffix}`, false
       );
       return {
         uuid: uuidBuffer.toString('hex'),
