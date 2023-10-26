@@ -4,7 +4,8 @@ import { formatError } from './formatError.js';
 import { extname } from 'path';
 
 export const uploadProguard = async (args) => {
-  const { path, release, apikey, apihost, verbose } = args;
+  const { paths, release, apikey, apihost, verbose } = args;
+  const path = paths[0];
 
   console.info(`Preparing to upload ProGuard mapping for release ${release} ...`);
 
