@@ -1,4 +1,15 @@
 import { open, read } from 'fs';
+import {
+  AccessError,
+  BufferRangeError,
+  DataViewError,
+  ERROR_CODES,
+  FileNotFoundError,
+  MissingUUIDError,
+  OutOfRangeError,
+  ReadFileError,
+  TimedOutError,
+} from './errorTypes.js';
 
 const MH_MAGIC_64 = 0xfeedfacf;
 const MH_CIGAM_64 = 0xcffaedfe;
@@ -30,22 +41,56 @@ const FAT_HEADER_BYTES = 8;
 
 const LOAD_COMMAND_BYTES = 8;
 
-function readBytes(fd, position, length) {
-  return new Promise((resolve, reject) => {
+function handleFileError(errMessage, err) {
+  if (err instanceof RangeError) {
+    throw new OutOfRangeError(errMessage, err);
+  }
+  switch (err.code) {
+    case ERROR_CODES.EACCES:
+      throw new AccessError(errMessage, err);
+    case ERROR_CODES.ENOENT:
+      throw new FileNotFoundError(errMessage, err);
+    case ERROR_CODES.ETIMEDOUT:
+      throw new TimedOutError(errMessage, err);
+    default:
+      throw new ReadFileError(errMessage, err);
+  }
+}
+
+function readBytes(fd, position, length, errMessage) {
+  return new Promise(resolve => {
     const output = Buffer.alloc(length);
     read(fd, { buffer: output, length, position }, (err) => {
       if (err) {
-        reject(err);
-      } else {
-        resolve(output);
+        handleFileError(errMessage, err);
       }
+      const dataView = new DataView(output.buffer);
+      resolve(dataView);
     });
   });
 }
 
-function getMagic(buffer) {
-  const view = new DataView(buffer.buffer);
-  return view.getUint32(0);
+function getUint32(buffer, offset, errMessage, littleEndian = false) {
+  try {
+    return buffer.getUint32(offset, littleEndian);
+  } catch (err) {
+    if (err instanceof RangeError) {
+      throw new BufferRangeError(errMessage, err);
+    }
+    throw new DataViewError(errMessage, err);
+  }
+}
+
+function getErrorSuffixForArch(archNum, archName = null) {
+  if (archNum !== null) {
+    return `for arch ${archNum}${archName ? ` (${archName})` : ''} in multi-arch mapping`;
+  }
+  return `for ${archName ? `${archName} ` : ''}arch in single-arch mapping`;
+}
+
+function parseMagicNumber(view, archNum = null, archName = null) {
+  const suffix = archName === null ? 'for file' : getErrorSuffixForArch(archNum, archName);
+  return getUint32(view, 0, `Error parsing magic number ${suffix}`);
 }
 
 function getIsMach64Header(magic) {
@@ -60,83 +105,65 @@ function getIsMultiArch(magic) {
   return magic === FAT_CIGAM || magic === FAT_MAGIC;
 }
 
-function getNumArchs(buffer) {
-  const bufDataView = new DataView(buffer.buffer);
-  return bufDataView.getUint32(4);
+function getNumArchs(view) {
+  return getUint32(
+    view, 4, 'Error parsing arch count for multi-arch mapping'
+  );
 }
 
-function getArchDetails(buffer) {
-  const bufDataView = new DataView(buffer.buffer);
-  return {
-    cpuType: bufDataView.getUint32(0),
-    archOffset: bufDataView.getUint32(8),
-  };
+function getArchDetails(view, archNum) {
+  const archSuffix = getErrorSuffixForArch(archNum);
+
+  const cpuType = getUint32(view, 0, `Error parsing cpuType ${archSuffix}`);
+  const archOffset = getUint32(view, 8, `Error parsing offset ${archSuffix}`);
+
+  return { cpuType, archOffset };
 }
 
-function getHeaderVals(buffer, shouldSwap) {
-  const buf = shouldSwap ? buffer.reverse().buffer : buffer.buffer;
-  const bufDataView = new DataView(buf);
-  return {
-    cpuType: bufDataView.getUint32(4),
-    ncmds: bufDataView.getUint32(16),
-  };
+function getHeaderVals(view, shouldSwap, archSuffix) {
+  const cpuType = getUint32(view, 4, `Error parsing cpuType ${archSuffix}`, shouldSwap);
+
+  const ncmds = getUint32(
+    view, 32, `Error parsing number of load commands ${archSuffix}`, shouldSwap
+  );
+
+  return { cpuType, ncmds };
 }
 
-function getLoadCommand(buffer, shouldSwap) {
-  const buf = shouldSwap ? buffer.reverse().buffer : buffer.buffer;
-  const bufDataView = new DataView(buf);
+function getLoadCommandDetails(view, shouldSwap, cmdSuffix) {
+  const cmd = getUint32(view, 0, `Error parsing ${cmdSuffix}`, shouldSwap);
+  const cmdSize = getUint32(view, 4, `Error parsing size of ${cmdSuffix}`, shouldSwap);
 
-  let cmdSize;
-  let cmd;
-
-  if (shouldSwap) {
-    cmdSize = bufDataView.getUint32(0);
-    cmd = bufDataView.getUint32(4);
-  } else {
-    cmdSize = bufDataView.getUint32(4);
-    cmd = bufDataView.getUint32(0);
-  }
   return { cmd, cmdSize };
 }
 
-async function getArchEntry(fd, archOffset, magic, archName = null) {
+async function getArchEntry(fd, magic, archOffset = 0, archNum = null, archName = null) {
   const isMach64Header = getIsMach64Header(magic);
   const headerSize = isMach64Header ? MACH_64_HEADER_BYTES : MACH_HEADER_BYTES;
   const shouldSwap = shouldSwapBytes(magic);
 
-  let headerBuffer;
-  try {
-    headerBuffer = await readBytes(fd, archOffset, headerSize);
-  } catch (err) {
-    throw new Error(`Error reading header\n${err}`);
-  }
+  let archSuffix = getErrorSuffixForArch(archNum, archName);
+  const header = await readBytes(
+    fd, archOffset, headerSize, `Error reading header${archSuffix}`
+  );
 
-  let cpuType;
-  let ncmds;
-  try {
-    ({ cpuType, ncmds } = getHeaderVals(headerBuffer, shouldSwap));
-  } catch (err) {
-    throw new Error(`Error parsing cpuType and ncmds\n${err}`);
-  }
+  const { cpuType, ncmds } = getHeaderVals(header, shouldSwap, archSuffix);
   const arch = archName || ARCH_NAMES[cpuType];
+  archSuffix = getErrorSuffixForArch(archNum, archName);
 
   let offset = archOffset + headerSize;
-  for (let i = 0; i < ncmds; i++) {
-    let loadCommand;
-    try {
-      const loadCommandBuffer = await readBytes(fd, offset, LOAD_COMMAND_BYTES);
-      loadCommand = getLoadCommand(loadCommandBuffer, shouldSwap);
-    } catch (err) {
-      throw new Error(`Error getting load command ${i} of ${ncmds} at offset ${offset}\n${err}`);
-    }
+  for (let cmdNum = 0; cmdNum < ncmds; cmdNum++) {
+    const cmdSuffix = `load command ${cmdNum} ${archSuffix}`;
 
-    if (loadCommand.cmd === LC_UUID) {
-      let uuidBuffer;
-      try {
-        uuidBuffer = await readBytes(fd, offset + LOAD_COMMAND_BYTES, UUID_BYTES);
-      } catch (err) {
-        throw new Error(`Error reading load command uuid\n${err}`);
-      }
+    const loadCommand = await readBytes(
+      fd, offset, LOAD_COMMAND_BYTES, `Error reading ${cmdSuffix}`
+    );
+    const { cmd, cmdSize } = getLoadCommandDetails(loadCommand, shouldSwap, cmdSuffix);
+
+    if (cmd === LC_UUID) {
+      const uuidBuffer = await readBytes(
+        fd, offset + LOAD_COMMAND_BYTES, UUID_BYTES, `Error reading uuid of ${cmdSuffix}`
+      );
       return {
         uuid: uuidBuffer.toString('hex'),
         arch,
@@ -144,100 +171,54 @@ async function getArchEntry(fd, archOffset, magic, archName = null) {
       };
     }
 
-    offset += loadCommand.cmdSize;
+    offset += cmdSize;
   }
-  throw new Error('No arch mapping uuid found');
+  throw new MissingUUIDError(`No mapping uuid found ${archSuffix} at offset ${archOffset}`);
 }
 
 export async function getMachOArchs(filepath) {
   return new Promise((resolve, reject) => {
-    const rejectWithError = (message, err) => {
-      console.error(message, err);
-      reject(err);
-    };
     open(filepath, async (err, fd) => {
-      if (err) {
-        rejectWithError(`Error parsing file ${filepath}`, err);
-      }
-
-      let magic;
       try {
-        const magicBuffer = await readBytes(fd, 0, MAGIC_NUMBER_BYTES);
-        magic = getMagic(magicBuffer);
+        if (err) {
+          handleFileError(`Error opening file ${filepath}`, err);
+        }
+
+        let magicDataView = await readBytes(fd, 0, MAGIC_NUMBER_BYTES, 'Error getting magic number');
+        let magic = parseMagicNumber(magicDataView);
+
+        if (getIsMultiArch(magic)) {
+          const archEntries = [];
+
+          const header = await readBytes(
+            fd, 0, FAT_HEADER_BYTES, 'Error reading multi-arch header'
+          );
+
+          const numArchs = getNumArchs(header);
+          let offset = FAT_HEADER_BYTES;
+          for (let archNum = 0; archNum < numArchs; archNum++) {
+            const fatArchHeader = await readBytes(
+              fd, offset, FAT_ARCH_BYTES, `Error reading details for arch ${archNum} in multi-arch mapping`
+            );
+
+            const { cpuType, archOffset } = getArchDetails(fatArchHeader, archNum);
+            const archName = ARCH_NAMES[cpuType];
+
+            offset += FAT_ARCH_BYTES;
+
+            magicDataView = await readBytes(fd, archOffset, MAGIC_NUMBER_BYTES);
+            magic = parseMagicNumber(magicDataView, archNum, archName);
+
+            const archEntry = await getArchEntry(fd, magic, archOffset, archNum, archName);
+            archEntries.push(archEntry);
+          }
+          resolve(archEntries);
+        } else {
+          const archEntry = await getArchEntry(fd, magic);
+          resolve([archEntry]);
+        }
       } catch (err) {
-        rejectWithError(`Error getting magic number for ${filepath}`, err);
-      }
-
-      if (getIsMultiArch(magic)) {
-        const archEntries = [];
-
-        let headerBuffer;
-        try {
-          headerBuffer = await readBytes(fd, 0, FAT_HEADER_BYTES);
-        } catch (err) {
-          rejectWithError(`Error reading multi-arch header for ${filepath}`, err);
-        }
-
-        let numArchs;
-        try {
-          numArchs = getNumArchs(headerBuffer);
-        } catch (err) {
-          rejectWithError(`Error parsing arch count for multi-arch mapping ${filepath}`, err);
-        }
-
-        let offset = FAT_HEADER_BYTES;
-        for (let i = 0; i < numArchs; i++) {
-          let fatArchBuffer;
-          try {
-            fatArchBuffer = await readBytes(fd, offset, FAT_ARCH_BYTES);
-          } catch (err) {
-            rejectWithError(`Error reading details for arch ${i} in multi-arch mapping ${filepath}`, err);
-          }
-
-          let cpuType;
-          let archOffset;
-          try {
-            ({ cpuType, archOffset } = getArchDetails(fatArchBuffer));
-          } catch (err) {
-            rejectWithError(
-              `Error parsing cpuType and offset for arch ${i} in multi-arch mapping ${filepath}`,
-              err
-            );
-          }
-          const archName = ARCH_NAMES[cpuType];
-
-          offset += FAT_ARCH_BYTES;
-
-          try {
-            const magicBuffer = await readBytes(fd, archOffset, MAGIC_NUMBER_BYTES);
-            magic = getMagic(magicBuffer);
-          } catch (err) {
-            rejectWithError(
-              `Error reading magic number for arch ${i} (${archName}) in multi-arch mapping ${filepath}`,
-              err
-            );
-          }
-
-          let archEntry;
-          try {
-            archEntry = await getArchEntry(fd, archOffset, magic, archName);
-          } catch (err) {
-            rejectWithError(
-              `Error parsing arch entry ${i} (${archName}) in multi-arch mapping ${filepath}`,
-              err
-            );
-          }
-          archEntries.push(archEntry);
-        }
-        resolve(archEntries);
-      } else {
-        let archEntry;
-        try {
-          archEntry = await getArchEntry(fd, 0, magic);
-        } catch (err) {
-          rejectWithError(`Error parsing arch entry for ${filepath}`, err);
-        }
-        resolve([archEntry]);
+        reject(err);
       }
     });
   });
