@@ -25,7 +25,7 @@ export async function formatError(res, { verbose = false } = {}) {
         && resObj._raw.length > 0
         && resObj._raw[0].data
       ) {
-        console.error(Buffer.from(resObj._raw[0].data));
+        console.error(Buffer.from(resObj._raw[0].data).toString('ascii'));
       } else {
         console.error('Could not complete request.');
       }
