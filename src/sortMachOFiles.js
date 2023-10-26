@@ -124,7 +124,7 @@ function getHeaderVals(view, shouldSwap, archSuffix) {
   const cpuType = getUint32(view, 4, `Error parsing cpuType ${archSuffix}`, shouldSwap);
 
   const ncmds = getUint32(
-    view, 32, `Error parsing number of load commands ${archSuffix}`, shouldSwap
+    view, 16, `Error parsing number of load commands ${archSuffix}`, shouldSwap
   );
 
   return { cpuType, ncmds };

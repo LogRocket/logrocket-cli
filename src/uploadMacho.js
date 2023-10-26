@@ -1,9 +1,9 @@
 import { createReadStream } from 'fs';
-import { apiClient } from '../apiClient.js';
-import { formatError } from '../formatError.js';
-import { gatherFiles } from '../gatherFiles.js';
-import { getMachOArchs } from '../sortMachOFiles.js';
-import { ERROR_NAMES } from '../errorTypes.js';
+import { apiClient } from './apiClient';
+import { formatError } from './formatError.js';
+import { gatherFiles } from './gatherFiles.js';
+import { getMachOArchs } from './sortMachOFiles.js';
+import { ERROR_NAMES } from './errorTypes.js';
 
 const outOfRangeError = 'An out of range error occurred while trying to read bytes from mapping file';
 const fileAccessError = 'Incorrect permissions for file';
