@@ -8,39 +8,38 @@ export async function gatherFiles(paths, { globString = '**/*.{js,jsx,js.map}' }
   const map = [];
 
   await Promise.all(paths.map((path) => {
-      const realPath = join(cwd(), path);
-      let isFile;
+    const realPath = join(cwd(), path);
+    let isFile;
 
-      try {
-        isFile = statSync(realPath).isFile();
-      } catch (err) {
-        handleFileError(`Error accessing stats for ${path}`, err);
-      }
+    try {
+      isFile = statSync(realPath).isFile();
+    } catch (err) {
+      handleFileError(`Error accessing stats for ${path}`, err);
+    }
 
-      if (isFile) {
-        map.push({
-          path: realPath,
-          name: basename(realPath),
-        });
-  
-        return Promise.resolve();
-      }
-  
-      return new Promise((resolve, reject) => {
-        glob(globString, { cwd: realPath }, async (err, files) => {
-          if (err) {
-            reject(err);
-          }
-          for (const file of files) {
-            map.push({
-              path: join(realPath, file),
-              name: file,
-            });
-          }
+    if (isFile) {
+      map.push({
+        path: realPath,
+        name: basename(realPath),
+      });
 
-          resolve();
-        });
-      });  
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      glob(globString, { cwd: realPath }, async (err, files) => {
+        if (err) {
+          reject(err);
+        }
+        for (const file of files) {
+          map.push({
+            path: join(realPath, file),
+            name: file,
+          });
+        }
+
+        resolve();
+      });
+    });
   }));
 
   return map;

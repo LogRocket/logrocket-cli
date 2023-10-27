@@ -35,7 +35,7 @@ const getFileErrMessage = (err) => {
     default:
       return null;
   }
-}
+};
 
 export const uploadMachO = async (args) => {
   const { paths, release, apikey, apihost, verbose } = args;
@@ -104,8 +104,8 @@ export const uploadMachO = async (args) => {
     fileList = await gatherFiles(paths, { globString: '**/DWARF/*' });
   } catch (err) {
     const errDetail = getFileErrMessage(err);
-    const errMessage = `${gatherFilesError}${errDetail ? `: ${errDetail}` : ''}`
-    
+    const errMessage = `${gatherFilesError}${errDetail ? `: ${errDetail}` : ''}`;
+
     if (verbose) {
       console.error(`${errMessage}\n${err.stack}`);
     } else {
@@ -147,7 +147,7 @@ export const uploadMachO = async (args) => {
             break;
           default:
             errMessage = sortingError;
-        }  
+        }
       }
       errMessage += ` ${path}`;
 
