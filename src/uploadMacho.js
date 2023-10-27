@@ -91,7 +91,13 @@ export const uploadMachO = async (args) => {
   }
 
   console.info(`Found ${fileList.length} debug file${fileList.length === 1 ? '' : 's'} ...`);
-  console.info(fileList.map(({ path }) => `- ${path}`).join('\n'));
+
+  if (verbose) {
+    console.info(fileList.map(({ path }) => `- ${path}`).join('\n'));
+  } else {
+    console.info('Rerun command with --verbose to see debug file paths');
+  }
+
   const archEntriesLists = await Promise.all(fileList.map(async ({ name, path }) => {
     let fileArchEntries;
     try {

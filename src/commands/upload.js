@@ -91,8 +91,12 @@ export const handler = async (args) => {
 
   const fileList = await gatherFiles(paths);
 
-  console.info(fileList.map(({ path }) => `- ${path}`).join('\n'));
   console.info(`Found ${fileList.length} file${fileList.length === 1 ? '' : 's'} ...`);
+  if (verbose) {
+    console.info(fileList.map(({ path }) => `- ${path}`).join('\n'));
+  } else {
+    console.info('Rerun command with --verbose to see file paths');
+  }
 
   const CHUNK_SIZE = 10;
   for (let i = 0; i < fileList.length; i += CHUNK_SIZE) {
