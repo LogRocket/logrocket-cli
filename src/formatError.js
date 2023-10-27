@@ -18,7 +18,7 @@ export async function formatError(res, { verbose = false } = {}) {
       console.error(json.error);
     }
   } catch (err) {
-      console.error('Could not complete request.');
+    console.error('Could not complete request.');
   }
   process.exit(1);
 }

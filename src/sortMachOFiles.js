@@ -66,7 +66,7 @@ function readBytes(fd, position, length, errMessage, asDataView = true) {
       }
       if (asDataView) {
         const dataView = new DataView(output.buffer);
-        resolve(dataView);          
+        resolve(dataView);
       } else {
         resolve(output);
       }
