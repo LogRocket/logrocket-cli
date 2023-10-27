@@ -8,7 +8,7 @@ export const command = 'upload <paths..>';
 export const describe = 'Upload JavaScript sourcemaps for a release';
 export const builder = (args) => {
   args
-    .usage('\nUsage: logrocket upload -r <release> <paths..>')
+    .usage('\nUsage: logrocket [-k <apikey>] upload [-r <release>] [<paths..>]')
     .option('r', {
       alias: 'release',
       type: 'string',
@@ -91,6 +91,7 @@ export const handler = async (args) => {
 
   const fileList = await gatherFiles(paths);
 
+  console.info(fileList.map(({ path }) => `- ${path}`).join('\n'));
   console.info(`Found ${fileList.length} file${fileList.length === 1 ? '' : 's'} ...`);
 
   const CHUNK_SIZE = 10;
