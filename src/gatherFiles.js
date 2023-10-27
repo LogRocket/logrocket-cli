@@ -22,24 +22,20 @@ export async function gatherFiles(paths, { globString = '**/*.{js,jsx,js.map}' }
         path: realPath,
         name: basename(realPath),
       });
-
-      return Promise.resolve();
-    }
-    return new Promise((resolve, reject) => {
-      glob(globString, { cwd: realPath }, async (err, files) => {
-        if (err) {
-          reject(err);
-        }
-        for (const file of files) {
+    } else {
+      try {
+        glob(globString, { cwd: realPath, sync: true }).forEach(async file => {
           map.push({
             path: join(realPath, file),
             name: file,
           });
-        }
+        });
+      } catch (err) {
+        handleFileError(`Error scanning ${path} for files`, err);
+      }
+    }
 
-        resolve();
-      });
-    });
+    return Promise.resolve();
   }));
 
   return map;
