@@ -8,7 +8,7 @@ export class WrappedError extends Error {
   }
 }
 
-export const ERROR_CODES = {
+const ERROR_CODES = {
   EACCES: 'EACCES',
   ENOENT: 'ENOENT',
   ETIMEDOUT: 'ETIMEDOUT',
@@ -25,28 +25,28 @@ export const ERROR_NAMES = {
   MissingUUIDError: 'MissingUUIDError',
 };
 
-export class AccessError extends WrappedError {
+class AccessError extends WrappedError {
   constructor(msg, originalError) {
     super(msg, originalError, ERROR_NAMES.AccessError);
   }
 }
-export class FileNotFoundError extends WrappedError {
+class FileNotFoundError extends WrappedError {
   constructor(msg, originalError) {
     super(msg, originalError, ERROR_NAMES.FileNotFoundError);
   }
 }
-export class TimedOutError extends WrappedError {
+class TimedOutError extends WrappedError {
   constructor(msg, originalError) {
     super(msg, originalError, ERROR_NAMES.TimedOutError);
   }
 }
 
-export class OutOfRangeError extends WrappedError {
+class OutOfRangeError extends WrappedError {
   constructor(msg, originalError) {
     super(msg, originalError, ERROR_NAMES.OutOfRangeError);
   }
 }
-export class ReadFileError extends WrappedError {
+class ReadFileError extends WrappedError {
   constructor(msg, originalError) {
     super(msg, originalError, ERROR_NAMES.ReadFileError);
   }
@@ -67,5 +67,21 @@ export class MissingUUIDError extends Error {
   constructor(msg) {
     super(msg);
     this.name = ERROR_NAMES.MissingUUIDError;
+  }
+}
+
+export function handleFileError(errMessage, err) {
+  if (err instanceof RangeError) {
+    throw new OutOfRangeError(errMessage, err);
+  }
+  switch (err.code) {
+    case ERROR_CODES.EACCES:
+      throw new AccessError(errMessage, err);
+    case ERROR_CODES.ENOENT:
+      throw new FileNotFoundError(errMessage, err);
+    case ERROR_CODES.ETIMEDOUT:
+      throw new TimedOutError(errMessage, err);
+    default:
+      throw new ReadFileError(errMessage, err);
   }
 }

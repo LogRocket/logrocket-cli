@@ -10,6 +10,8 @@ const fileCountError = `No debug information files found
 See ios dev docs for information on building your app to include debug info ${dsymDocsLink}
 `;
 
+const gatherFilesError = 'An error occurred while gathering debug files';
+
 const outOfRangeError = 'An out of range error occurred while trying to read bytes from mapping file';
 const fileAccessError = 'Incorrect permissions for file';
 const fileNotFoundError = 'No such file or directory';
@@ -19,6 +21,21 @@ const bufferRangeError = 'Attempted to access bytes outside of range while parsi
 const dataViewError = 'An error occurred while parsing bytes from mapping file';
 const missingUUIDError = 'No uuid found for mapping file';
 const sortingError = 'An error occurred while parsing architecture details from mapping file';
+
+const getFileErrMessage = (err) => {
+  switch (err.name) {
+    case ERROR_NAMES.AccessError:
+      return fileAccessError;
+    case ERROR_NAMES.FileNotFoundError:
+      return fileNotFoundError;
+    case ERROR_NAMES.TimedOutError:
+      return timedOutError;
+    case ERROR_NAMES.ReadFileError:
+      return readError;
+    default:
+      return null;
+  }
+}
 
 export const uploadMachO = async (args) => {
   const { paths, release, apikey, apihost, verbose } = args;
@@ -84,7 +101,20 @@ export const uploadMachO = async (args) => {
     }
   };
 
-  const fileList = await gatherFiles(paths, { globString: '**/DWARF/*' });
+  let fileList;
+  try {
+    fileList = await gatherFiles(paths, { globString: '**/DWARF/*' });
+  } catch (err) {
+    const errDetail = getFileErrMessage(err);
+    const errMessage = `${gatherFilesError}${errDetail ? `: ${errDetail}` : ''}`
+    
+    if (verbose) {
+      console.error(`${errMessage}\n${err.stack}`);
+    } else {
+      console.error(`${errMessage}\nFor additional details, rerun command with --verbose`);
+    }
+  }
+
   if (fileList.length === 0) {
     console.error(fileCountError);
     process.exit(1);
@@ -103,34 +133,23 @@ export const uploadMachO = async (args) => {
     try {
       fileArchEntries = await getMachOArchs(path);
     } catch (err) {
-      let errMessage;
-      switch (err.name) {
-        case ERROR_NAMES.OutOfRangeError:
-          errMessage = outOfRangeError;
-          break;
-        case ERROR_NAMES.AccessError:
-          errMessage = fileAccessError;
-          break;
-        case ERROR_NAMES.FileNotFoundError:
-          errMessage = fileNotFoundError;
-          break;
-        case ERROR_NAMES.TimedOutError:
-          errMessage = timedOutError;
-          break;
-        case ERROR_NAMES.ReadFileError:
-          errMessage = readError;
-          break;
-        case ERROR_NAMES.BufferRangeError:
-          errMessage = bufferRangeError;
-          break;
-        case ERROR_NAMES.DataViewError:
-          errMessage = dataViewError;
-          break;
-        case ERROR_NAMES.MissingUUIDError:
-          errMessage = missingUUIDError;
-          break;
-        default:
-          errMessage = sortingError;
+      let errMessage = getFileErrMessage(err);
+      if (errMessage === null) {
+        switch (err.name) {
+          case ERROR_NAMES.OutOfRangeError:
+            return outOfRangeError;
+          case ERROR_NAMES.BufferRangeError:
+            errMessage = bufferRangeError;
+            break;
+          case ERROR_NAMES.DataViewError:
+            errMessage = dataViewError;
+            break;
+          case ERROR_NAMES.MissingUUIDError:
+            errMessage = missingUUIDError;
+            break;
+          default:
+            errMessage = sortingError;
+        }  
       }
       errMessage += ` ${path}`;
 

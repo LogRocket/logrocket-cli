@@ -1,14 +1,9 @@
 import { open, read } from 'fs';
 import {
-  AccessError,
+  handleFileError,
   BufferRangeError,
   DataViewError,
-  ERROR_CODES,
-  FileNotFoundError,
   MissingUUIDError,
-  OutOfRangeError,
-  ReadFileError,
-  TimedOutError,
 } from './errorTypes.js';
 
 const MH_MAGIC_64 = 0xfeedfacf;
@@ -40,22 +35,6 @@ const FAT_ARCH_BYTES = 20;
 const FAT_HEADER_BYTES = 8;
 
 const LOAD_COMMAND_BYTES = 8;
-
-function handleFileError(errMessage, err) {
-  if (err instanceof RangeError) {
-    throw new OutOfRangeError(errMessage, err);
-  }
-  switch (err.code) {
-    case ERROR_CODES.EACCES:
-      throw new AccessError(errMessage, err);
-    case ERROR_CODES.ENOENT:
-      throw new FileNotFoundError(errMessage, err);
-    case ERROR_CODES.ETIMEDOUT:
-      throw new TimedOutError(errMessage, err);
-    default:
-      throw new ReadFileError(errMessage, err);
-  }
-}
 
 function readBytes(fd, position, length, errMessage, asDataView = true) {
   return new Promise(resolve => {
