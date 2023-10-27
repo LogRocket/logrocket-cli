@@ -10,7 +10,7 @@ See android dev docs for information on how to shrink and obfuscate your code ht
 export const uploadProguard = async (args) => {
   const { paths, release, apikey, apihost, verbose } = args;
   if (paths.length > 1) {
-    console.error(pathCountError);
+    console.error(`More than 1 proguard file found, ${pathCountError}`);
     process.exit(1);
   }
   const path = paths[0];
@@ -34,7 +34,7 @@ export const uploadProguard = async (args) => {
   }
 
   if (!fileStats.isFile()) {
-    console.error(`${path} is not a file`);
+    console.error(`${path} is not a file, ${pathCountError}`);
     process.exit(1);
   }
 
