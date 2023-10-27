@@ -5,6 +5,11 @@ import { gatherFiles } from './gatherFiles.js';
 import { getMachOArchs } from './sortMachOFiles.js';
 import { ERROR_NAMES } from './errorTypes.js';
 
+const dsymDocsLink = 'https://developer.apple.com/documentation/xcode/building-your-app-to-include-debugging-information/';
+const fileCountError = `No debug information files found
+See ios dev docs for information on building your app to include debug info ${dsymDocsLink}
+`;
+
 const outOfRangeError = 'An out of range error occurred while trying to read bytes from mapping file';
 const fileAccessError = 'Incorrect permissions for file';
 const fileNotFoundError = 'No such file or directory';
@@ -80,7 +85,13 @@ export const uploadMachO = async (args) => {
   };
 
   const fileList = await gatherFiles(paths, { globString: '**/DWARF/*' });
-  console.info(`Found ${fileList.length} file${fileList.length === 1 ? '' : 's'} ...`);
+  if (fileList.length === 0) {
+    console.error(fileCountError);
+    process.exit(1);
+  }
+
+  console.info(`Found ${fileList.length} debug file${fileList.length === 1 ? '' : 's'} ...`);
+  console.info(fileList.map(({ path }) => `- ${path}`).join('\n'));
   const archEntriesLists = await Promise.all(fileList.map(async ({ name, path }) => {
     let fileArchEntries;
     try {
@@ -128,7 +139,7 @@ export const uploadMachO = async (args) => {
     return fileArchEntries.map(entry => ({ ...entry, name, path }));
   }));
   const archEntries = archEntriesLists.flat();
-  console.info(`Found ${archEntries.length} total build architecture mappings`);
+  console.info(`Parsed ${archEntries.length} total build architecture mappings`);
 
 
   const CHUNK_SIZE = 1;
