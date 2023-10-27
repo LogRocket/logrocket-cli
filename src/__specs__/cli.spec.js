@@ -261,10 +261,10 @@ describe('CLI dispatch tests', function cliTests() {
 
   it('should show the upload help', mochaAsync(async () => {
     const result2 = await executeCommand('help upload');
-    expect(result2.stdout).to.contain('Usage: logrocket upload');
+    expect(result2.stdout).to.contain('Usage: logrocket [-k <apikey>] upload [-r <release>] <paths..>');
 
     const result3 = await executeCommand('upload --help');
-    expect(result3.stdout).to.contain('Usage: logrocket upload');
+    expect(result3.stdout).to.contain('Usage: logrocket [-k <apikey>] upload [-r <release>] <paths..>');
   }));
 
   it('should show not show secret options in upload help', mochaAsync(async () => {
@@ -276,7 +276,7 @@ describe('CLI dispatch tests', function cliTests() {
     const result = await executeCommand('upload');
 
     expect(result.err.code).to.equal(1);
-    expect(result.stderr).to.contain('Usage: logrocket upload');
+    expect(result.stderr).to.contain('Usage: logrocket [-k <apikey>] upload [-r <release>] <paths..>');
     expect(result.stderr).to.contain('Missing');
   }));
 
