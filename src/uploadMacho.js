@@ -13,7 +13,7 @@ See ios dev docs for information on building your app to include debug info ${ds
 const gatherFilesError = 'An error occurred while gathering debug files';
 
 const outOfRangeError = 'An out of range error occurred while trying to read bytes from mapping file';
-const fileAccessError = 'Incorrect permissions for';
+const fileAccessError = 'Incorrect permissions for path';
 const fileNotFoundError = 'No such file or directory';
 const timedOutError = 'Operation timed out while parsing mapping file';
 const readError = 'An error occurred while trying to read from mapping file';
