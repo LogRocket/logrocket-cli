@@ -11,6 +11,7 @@ export const uploadProguard = async (args) => {
   const { paths, release, apikey, apihost, verbose } = args;
   if (paths.length > 1) {
     console.error(pathCountError);
+    process.exit(1);
   }
   const path = paths[0];
 
