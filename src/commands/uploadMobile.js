@@ -18,7 +18,7 @@ const sampleiOSUploadPath = '/build/MyApp-iphoneos.xcarchive/dSYMs/MyApp.framewo
 
 export const builder = (args) => {
   args
-    .usage('\nUsage: logrocket [-k <apikey>] upload-mobile [-r <release>] [-p <platform>] [<paths..>]')
+    .usage('\nUsage: logrocket [-k <apikey>] upload-mobile [-r <release>] [-p <platform>] <paths..>')
     .option('r', {
       alias: 'release',
       type: 'string',

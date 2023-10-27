@@ -8,7 +8,7 @@ export const command = 'upload <paths..>';
 export const describe = 'Upload JavaScript sourcemaps for a release';
 export const builder = (args) => {
   args
-    .usage('\nUsage: logrocket [-k <apikey>] upload [-r <release>] [<paths..>]')
+    .usage('\nUsage: logrocket [-k <apikey>] upload [-r <release>] <paths..>')
     .option('r', {
       alias: 'release',
       type: 'string',
