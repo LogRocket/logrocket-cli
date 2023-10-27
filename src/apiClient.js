@@ -90,23 +90,9 @@ class ApiClient {
   }
 
   async uploadFile({
-    release, filepath, contents, maxRetries, maxRetryDelay, version = 1,
+    contents, data, maxRetries, maxRetryDelay, url,
   }) {
-    let res;
-    if (version === 1) {
-      res = await this._makeRequest({
-        url: `releases/${release}/artifacts`,
-        data: { filepath },
-      });
-    } else if (version === 2) {
-      res = await this._makeRequest({
-        url: 'release-artifacts',
-        data: { filepath, release },
-      });
-    } else {
-      throw new Error(`Unkown uploadFile version number: ${version}`);
-    }
-
+    const res = await this._makeRequest({ url, data });
     if (!res.ok) {
       return res;
     }
@@ -115,7 +101,7 @@ class ApiClient {
     const gcloudUrl = fileData.signed_url;
 
     if (!gcloudUrl) {
-      throw new Error(`Could not get upload url for: ${filepath}`);
+      throw new Error(`Could not get upload url for: ${data.filepath}`);
     }
 
     const result = await retryableFetch(gcloudUrl, {

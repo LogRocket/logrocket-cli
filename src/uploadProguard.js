@@ -44,12 +44,11 @@ export const uploadProguard = async (args) => {
   }
 
   const data = {
-    release,
-    filepath: 'mapping.txt',
     contents: createReadStream(path),
+    data: { filepath: 'mapping.txt', release },
     maxRetries: args['max-retries'],
     maxRetryDelay: args['max-retry-delay'],
-    version: 2,
+    url: 'release-artifacts',
   };
 
   try {

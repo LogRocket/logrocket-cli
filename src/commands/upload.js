@@ -69,11 +69,11 @@ export const handler = async (args) => {
     const filepath = `${urlPrefix.replace(/\/$/, '')}/${name}`;
 
     const data = {
-      release,
-      filepath,
       contents: createReadStream(path),
+      data: { filepath },
       maxRetries: args['max-retries'],
       maxRetryDelay: args['max-retry-delay'],
+      url: `releases/${release}/artifacts`,
     };
 
     try {

@@ -60,12 +60,11 @@ export const uploadMachO = async (args) => {
 
     const debugFilePath = `${containerDirectory}/debuginfo`;
     const debugFileData = {
-      release,
-      filepath: debugFilePath,
       contents: createReadStream(path),
+      data: { filepath: debugFilePath, release },
       maxRetries: args['max-retries'],
       maxRetryDelay: args['max-retry-delay'],
-      version: 2,
+      url: 'release-artifacts',
     };
 
     const metaFilePath = `${containerDirectory}/meta`;
@@ -75,12 +74,11 @@ export const uploadMachO = async (args) => {
       file_format: fileFormat,
     };
     const metaFileData = {
-      release,
-      filepath: metaFilePath,
       contents: JSON.stringify(meta),
+      data: { filepath: metaFilePath, release },
       maxRetries: args['max-retries'],
       maxRetryDelay: args['max-retry-delay'],
-      version: 2,
+      url: 'release-artifacts',
     };
 
     try {
