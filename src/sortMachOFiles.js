@@ -226,7 +226,7 @@ async function getArchEntry(fd, magic, archOffset = 0, archNum = null, archName 
 
 export async function getMachOArchs(filepath) {
   return new Promise((resolve, reject) => {
-    open(filepath, async (err, fd) => {
+    open(filepath, 'r', async (err, fd) => {
       try {
         if (err) {
           handleFileError(`Error opening file ${filepath}`, err);
