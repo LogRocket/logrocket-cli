@@ -544,7 +544,7 @@ describe('CLI dispatch tests', function cliTests() {
       addReleaseArtifactRequest();
       addReleaseArtifactRequest();
 
-      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}/ios`);
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}/ios --verbose`);
 
       expect(result.err).to.be.null();
       expect(result.stdout).to.contain('Found 1 debug file');
@@ -617,7 +617,7 @@ describe('CLI dispatch tests', function cliTests() {
       addReleaseArtifactRequest();
       addReleaseArtifactRequest();
 
-      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}/osx`);
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}/osx --verbose`);
 
       expect(result.err).to.be.null();
       expect(result.stdout).to.contain('Found 1 debug file');
@@ -651,13 +651,13 @@ describe('CLI dispatch tests', function cliTests() {
 
     it('should error on non-macho file in the passed directory', mochaAsync(async () => {
       addCliStatusMessage();
-      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}elf`);
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}elf --verbose`);
       expect(result.stderr).to.contain(magicNumberError);
     }));
 
     it('should error on macho file without a debug id', mochaAsync(async () => {
       addCliStatusMessage();
-      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}no-code-id`);
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}no-code-id --verbose`);
       expect(result.stderr).to.contain(missingUUIDError);
     }));
 
