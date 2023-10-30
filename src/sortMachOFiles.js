@@ -82,7 +82,7 @@ const LOAD_COMMAND_BYTES = 8;
 function readBytes(fd, position, length, errMessage, asDataView = true) {
   return new Promise(resolve => {
     const output = Buffer.alloc(length);
-    read(fd, { buffer: output, length, position }, (err) => {
+    read(fd, output, 0, length, position, (err) => {
       if (err) {
         handleFileError(errMessage, err);
       }
