@@ -170,7 +170,8 @@ export const uploadMachO = async (args) => {
     }
     return fileArchEntries.map(entry => ({ ...entry, name, path }));
   }));
-  const archEntries = archEntriesLists.flat();
+  const archEntries = [];
+  archEntriesLists.forEach(list => archEntries.push(...list));
   console.info(`Parsed ${archEntries.length} total build architecture mappings`);
 
 
