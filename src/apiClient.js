@@ -1,7 +1,7 @@
 import 'isomorphic-fetch';
 import { version as cliVersion } from '../package.json';
 
-const delay = t => new Promise(resolve => setTimeout(() => resolve(), t));
+const delay = t => new Promise(resolve => setTimeout(resolve, t));
 
 const RETRY_STATUS = [429, 500, 502, 503, 504];
 
