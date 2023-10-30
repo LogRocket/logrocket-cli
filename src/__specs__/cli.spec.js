@@ -2,6 +2,7 @@ import { createServer } from 'http';
 import { exec } from 'child_process';
 import { parse } from 'url';
 import getRawBody from 'raw-body';
+import { magicNumberError, missingUUIDError } from '../uploadMacho';
 
 const CLI_INDEX = './bin/logrocket';
 const FIXTURE_PATH = './test/fixtures/';
@@ -45,7 +46,7 @@ describe('CLI dispatch tests', function cliTests() {
       body: { signed_url: `http://localhost:8818/upload/${uploadID}` },
     });
     addExpectRequest(`/upload/${uploadID}`, { status: 200 });
-  }
+  };
 
   const addArtifactRequest = () => addUploadRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/');
 
@@ -521,76 +522,166 @@ describe('CLI dispatch tests', function cliTests() {
   }));
 
   // UPLOAD-MOBILE
+  describe('upload-mobile', () => {
+    it('should show the upload-mobile help', mochaAsync(async () => {
+      const result = await executeCommand('upload-mobile --help');
+      expect(result.stdout).to.contain('Usage: logrocket [-k <apikey>] upload-mobile [-r <release>] [-p <platform>] <paths..>');
+    }));
 
-  it('should show the upload-mobile help', mochaAsync(async () => {
-    const result3 = await executeCommand('upload-mobile --help');
-    expect(result3.stdout).to.contain('Usage: logrocket [-k <apikey>] upload-mobile [-r <release>] [-p <platform>] <paths..>');
-  }));
+    it('should error if no platform is provided', mochaAsync(async () => {
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" ${FIXTURE_PATH}`);
 
-  it('should error if no platform is provided', mochaAsync(async () => {
-    const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" ${FIXTURE_PATH}`);
+      expect(result.err.code).to.equal(1);
+      expect(result.stderr).to.contain('You must specify a platform');
+    }));
 
-    expect(result.err.code).to.equal(1);
-    expect(result.stderr).to.contain('You must specify a platform');
-  }));
+    it('should upload a multi arch file in the passed directory', mochaAsync(async () => {
+      addCliStatusMessage();
+      addReleaseArtifactRequest();
+      addReleaseArtifactRequest();
+      addReleaseArtifactRequest();
+      addReleaseArtifactRequest();
+      addReleaseArtifactRequest();
+      addReleaseArtifactRequest();
 
-  it('should upload macho file in the passed directory', mochaAsync(async () => {
-    addCliStatusMessage();
-    addReleaseArtifactRequest();
-    addReleaseArtifactRequest();
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}/ios --verbose`);
 
-    const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}`);
+      expect(result.err).to.be.null();
+      expect(result.stdout).to.contain('Found 1 debug file');
+      expect(matchedRequests).to.have.length(13);
+      expect(unmatchedRequests).to.have.length(0);
 
-    expect(result.err).to.be.null();
-    expect(result.stdout).to.contain('Found 1 debug file');
-    expect(matchedRequests).to.have.length(5);
-    expect(unmatchedRequests).to.have.length(0);
+      expect(matchedRequests[0].method).to.equal('GET');
 
-    expect(matchedRequests[0].method).to.equal('GET');
-
-    expect(matchedRequests).to.deep.include.members([
-      {
-        method: 'POST',
-        headers: {
-          authorization: 'Token org:app:secret',
+      expect(matchedRequests).to.deep.include.members([
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Token org:app:secret',
+          },
+          body: '{"filepath":"e5/5d006ebf5235d98e0d3431f04e4e37/debuginfo","release":"1.0.2"}',
         },
-        body: '{"filepath":"d7/4ddc6e99173d9eb4d7b6369442a683/debuginfo","release":"1.0.2"}',
-      },
-      {
-        method: 'POST',
-        headers: {
-          authorization: 'Token org:app:secret',
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Token org:app:secret',
+          },
+          body: '{"filepath":"e5/5d006ebf5235d98e0d3431f04e4e37/meta","release":"1.0.2"}',
         },
-        body: '{"filepath":"d7/4ddc6e99173d9eb4d7b6369442a683/meta","release":"1.0.2"}',
-      },
-      {
-        method: 'PUT',
-        body: '{"name":"DWARF/MachO-OSX-x86-ls","arch":"i386","file_format":"macho"}',
-      },
-    ]
-    );
-  }));
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Token org:app:secret',
+          },
+          body: '{"filepath":"84/7eafb3cbb135cc939925accd7d9096/debuginfo","release":"1.0.2"}',
+        },
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Token org:app:secret',
+          },
+          body: '{"filepath":"84/7eafb3cbb135cc939925accd7d9096/meta","release":"1.0.2"}',
+        },
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Token org:app:secret',
+          },
+          body: '{"filepath":"3a/8578499a1e3e9d8951ee22bd274c57/debuginfo","release":"1.0.2"}',
+        },
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Token org:app:secret',
+          },
+          body: '{"filepath":"3a/8578499a1e3e9d8951ee22bd274c57/meta","release":"1.0.2"}',
+        },
+        {
+          method: 'PUT',
+          body: '{"name":"DWARF/MachO-iOS-armv7-armv7s-arm64-Helloworld","arch":"armv7","file_format":"macho"}',
+        },
+        {
+          method: 'PUT',
+          body: '{"name":"DWARF/MachO-iOS-armv7-armv7s-arm64-Helloworld","arch":"armv7s","file_format":"macho"}',
+        },
+        {
+          method: 'PUT',
+          body: '{"name":"DWARF/MachO-iOS-armv7-armv7s-arm64-Helloworld","arch":"arm64","file_format":"macho"}',
+        },
+      ]
+      );
+    }));
 
-  it('should upload one passed proguard file', mochaAsync(async () => {
-    addCliStatusMessage();
+    it('should upload a single arch file in the passed directory', mochaAsync(async () => {
+      addCliStatusMessage();
+      addReleaseArtifactRequest();
+      addReleaseArtifactRequest();
 
-    addReleaseArtifactRequest();
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}/osx --verbose`);
 
-    const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p android ${FIXTURE_PATH}mapping.txt`);
+      expect(result.err).to.be.null();
+      expect(result.stdout).to.contain('Found 1 debug file');
+      expect(matchedRequests).to.have.length(5);
+      expect(unmatchedRequests).to.have.length(0);
 
-    expect(result.err).to.be.null();
-    expect(matchedRequests).to.have.length(3);
-    expect(unmatchedRequests).to.have.length(0);
+      expect(matchedRequests[0].method).to.equal('GET');
 
-    const [s, r1, u1] = matchedRequests;
-    expect(s.method).to.equal('GET');
+      expect(matchedRequests).to.deep.include.members([
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Token org:app:secret',
+          },
+          body: '{"filepath":"d7/4ddc6e99173d9eb4d7b6369442a683/debuginfo","release":"1.0.2"}',
+        },
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Token org:app:secret',
+          },
+          body: '{"filepath":"d7/4ddc6e99173d9eb4d7b6369442a683/meta","release":"1.0.2"}',
+        },
+        {
+          method: 'PUT',
+          body: '{"name":"DWARF/MachO-OSX-x86-ls","arch":"i386","file_format":"macho"}',
+        },
+      ]
+      );
+    }));
+
+    it('should error on non-macho file in the passed directory', mochaAsync(async () => {
+      addCliStatusMessage();
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}elf --verbose`);
+      expect(result.stderr).to.contain(magicNumberError);
+    }));
+
+    it('should error on macho file without a debug id', mochaAsync(async () => {
+      addCliStatusMessage();
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p ios ${FIXTURE_PATH}no-code-id --verbose`);
+      expect(result.stderr).to.contain(missingUUIDError);
+    }));
+
+    it('should upload one passed proguard file', mochaAsync(async () => {
+      addCliStatusMessage();
+
+      addReleaseArtifactRequest();
+
+      const result = await executeCommand(`upload-mobile -k org:app:secret -r 1.0.2 --apihost="http://localhost:8818" -p android ${FIXTURE_PATH}mapping.txt`);
+
+      expect(result.err).to.be.null();
+      expect(matchedRequests).to.have.length(3);
+      expect(unmatchedRequests).to.have.length(0);
+
+      const [s, r1, u1] = matchedRequests;
+      expect(s.method).to.equal('GET');
 
 
-    expect(r1.method).to.equal('POST');
-    expect(r1.headers).to.have.property('authorization', 'Token org:app:secret');
-    expect(r1.body).to.equal('{"filepath":"mapping.txt","release":"1.0.2"}');
+      expect(r1.method).to.equal('POST');
+      expect(r1.headers).to.have.property('authorization', 'Token org:app:secret');
+      expect(r1.body).to.equal('{"filepath":"mapping.txt","release":"1.0.2"}');
 
-    expect(u1.method).to.equal('PUT');
-    expect(u1.body).to.equal('proguard mapping\n');
-  }));
+      expect(u1.method).to.equal('PUT');
+      expect(u1.body).to.equal('proguard mapping\n');
+    }));
+  });
 });

@@ -19,7 +19,9 @@ const timedOutError = 'Operation timed out while parsing mapping file';
 const readError = 'An error occurred while trying to read from mapping file';
 const bufferRangeError = 'Attempted to access bytes outside of range while parsing mapping file';
 const dataViewError = 'An error occurred while parsing bytes from mapping file';
-const missingUUIDError = 'No uuid found for mapping file';
+export const magicNumberError = 'File may not be of expected type (MachO), found an invalid magic number for';
+export const missingUUIDError = 'No uuid found for mapping file';
+const loadCommandError = 'File may not be of expected type (MachO), an error occurred reading load commands from';
 const sortingError = 'An error occurred while parsing architecture details from mapping file';
 
 const getFileErrMessage = (err) => {
@@ -142,6 +144,12 @@ export const uploadMachO = async (args) => {
             break;
           case ERROR_NAMES.DataViewError:
             errMessage = dataViewError;
+            break;
+          case ERROR_NAMES.MagicNumberError:
+            errMessage = magicNumberError;
+            break;
+          case ERROR_NAMES.LoadCommandError:
+            errMessage = loadCommandError;
             break;
           case ERROR_NAMES.MissingUUIDError:
             errMessage = missingUUIDError;

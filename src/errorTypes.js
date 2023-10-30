@@ -20,8 +20,10 @@ export const ERROR_NAMES = {
   TimedOutError: 'TimedOutError',
   OutOfRangeError: 'OutOfRangeError',
   ReadFileError: 'ReadFileError',
+  MagicNumberError: 'MagicNumberError',
   DataViewError: 'DataViewError',
   BufferRangeError: 'BufferRangeError',
+  LoadCommandError: 'LoadCommandError',
   MissingUUIDError: 'MissingUUIDError',
 };
 
@@ -60,6 +62,20 @@ export class DataViewError extends WrappedError {
 export class BufferRangeError extends WrappedError {
   constructor(msg, originalError) {
     super(msg, originalError, ERROR_NAMES.BufferRangeError);
+  }
+}
+
+export class MagicNumberError extends Error {
+  constructor(msg) {
+    super(msg);
+    this.name = ERROR_NAMES.MagicNumberError;
+  }
+}
+
+export class LoadCommandError extends Error {
+  constructor(msg) {
+    super(msg);
+    this.name = ERROR_NAMES.LoadCommandError;
   }
 }
 
