@@ -3,3 +3,6 @@
 
 # 0.13.1
 - Adds `duplex` option to fetch requests to address newer verisons of node requiring the setting on requests with a payload body.
+
+# 0.14.0
+- Adds `upload-mobile` command (with `platform` option to specify ios or android) for uploading dSYM file(s) for an iOS app or a mapping file for an android app
