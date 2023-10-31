@@ -1,15 +1,14 @@
-import { join, basename } from 'path';
-import { cwd } from 'process';
-import { createReadStream, statSync } from 'fs';
-import apiClient from '../apiClient';
-import formatError from '../formatError';
-import glob from 'glob';
+import { createReadStream } from 'fs';
+import { apiClient } from '../apiClient';
+import { formatError } from '../formatError';
+import { gatherFiles } from '../gatherFiles';
+
 
 export const command = 'upload <paths..>';
 export const describe = 'Upload JavaScript sourcemaps for a release';
 export const builder = (args) => {
   args
-    .usage('\nUsage: logrocket upload -r <release> <paths..>')
+    .usage('\nUsage: logrocket [-k <apikey>] upload [-r <release>] <paths..>')
     .option('r', {
       alias: 'release',
       type: 'string',
@@ -48,38 +47,6 @@ export const builder = (args) => {
     .help('help');
 };
 
-async function gatherFiles(paths) {
-  const map = [];
-
-  await Promise.all(paths.map((path) => {
-    const realPath = join(cwd(), path);
-
-    if (statSync(realPath).isFile()) {
-      map.push({
-        path: realPath,
-        name: basename(realPath),
-      });
-
-      return Promise.resolve();
-    }
-
-    return new Promise(resolve => {
-      glob('**/*.{js,jsx,js.map}', { cwd: realPath }, async (err, files) => {
-        for (const file of files) {
-          map.push({
-            path: join(realPath, file),
-            name: file,
-          });
-        }
-
-        resolve();
-      });
-    });
-  }));
-
-  return map;
-}
-
 export const handler = async (args) => {
   const { paths, release, apikey, apihost, verbose, urlPrefix } = args;
 
@@ -102,11 +69,11 @@ export const handler = async (args) => {
     const filepath = `${urlPrefix.replace(/\/$/, '')}/${name}`;
 
     const data = {
-      release,
-      filepath,
       contents: createReadStream(path),
+      data: { filepath },
       maxRetries: args['max-retries'],
       maxRetryDelay: args['max-retry-delay'],
+      url: `releases/${release}/artifacts`,
     };
 
     try {
@@ -125,6 +92,11 @@ export const handler = async (args) => {
   const fileList = await gatherFiles(paths);
 
   console.info(`Found ${fileList.length} file${fileList.length === 1 ? '' : 's'} ...`);
+  if (verbose) {
+    console.info(fileList.map(({ path }) => `- ${path}`).join('\n'));
+  } else {
+    console.info('Rerun command with --verbose to see file paths');
+  }
 
   const CHUNK_SIZE = 10;
   for (let i = 0; i < fileList.length; i += CHUNK_SIZE) {

@@ -89,12 +89,10 @@ class ApiClient {
     });
   }
 
-  async uploadFile({ release, filepath, contents, maxRetries, maxRetryDelay }) {
-    const res = await this._makeRequest({
-      url: `releases/${release}/artifacts`,
-      data: { filepath },
-    });
-
+  async uploadFile({
+    contents, data, maxRetries, maxRetryDelay, url,
+  }) {
+    const res = await this._makeRequest({ url, data });
     if (!res.ok) {
       return res;
     }
@@ -103,7 +101,7 @@ class ApiClient {
     const gcloudUrl = fileData.signed_url;
 
     if (!gcloudUrl) {
-      throw new Error(`Could not get upload url for: ${filepath}`);
+      throw new Error(`Could not get upload url for: ${data.filepath}`);
     }
 
     const result = await retryableFetch(gcloudUrl, {
@@ -116,7 +114,7 @@ class ApiClient {
 
     if (this._gcsBucket) {
       await fetch(`${this.apihost}/gcloud/`, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Channel-Token': this._gcsToken,
@@ -138,6 +136,6 @@ class ApiClient {
   }
 }
 
-export default function apiClient(config) {
+export function apiClient(config) {
   return new ApiClient(config);
 }

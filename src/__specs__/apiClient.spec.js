@@ -1,5 +1,5 @@
 import fetchMock from 'fetch-mock';
-import apiClient from '../apiClient';
+import { apiClient } from '../apiClient';
 
 describe('CLI apiClient tests', () => {
   let client;
@@ -36,10 +36,12 @@ describe('CLI apiClient tests', () => {
 
     fetchMock.put('http://example.com/upload', () => 200, { name: 'gcloud' });
 
+    const release = '1.0.2';
     await client.uploadFile({
-      release: '1.0.2',
-      filepath: '~/path.js',
+      release,
+      data: { filepath: '~/path.js' },
       contents: 'stuff!',
+      url: `releases/${release}/artifacts`,
     });
 
     expect(fetchMock.calls().matched).to.have.length(2);

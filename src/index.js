@@ -28,6 +28,6 @@ yargs // eslint-disable-line no-unused-expressions
   })
   .commandDir('commands')
   .help()
-  .demand(1, 'Missing command, expected `release` or `upload`')
+  .demand(1, 'Missing command, expected `release`, `upload`, or `upload-mobile`')
   .recommendCommands()
   .argv;
