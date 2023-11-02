@@ -6,3 +6,6 @@
 
 # 0.14.0
 - Adds `upload-mobile` command (with `platform` option to specify ios or android) for uploading dSYM file(s) for an iOS app or a mapping file for an android app
+
+# 0.14.1
+- Adds support for uploading React Native sourcemap files from the `upload` command
