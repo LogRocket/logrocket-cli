@@ -4,7 +4,7 @@ import glob from 'glob';
 import { statSync } from 'fs';
 import { handleFileError } from './errorTypes';
 
-export async function gatherFiles(paths, { globString = '**/*.{js,jsx,js.map}' } = {}) {
+export async function gatherFiles(paths, { globString = '**/*.{js,jsx,map,bundle}' } = {}) {
   const map = [];
 
   await Promise.all(paths.map((path) => {
