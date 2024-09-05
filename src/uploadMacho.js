@@ -4,6 +4,7 @@ import { formatError } from './formatError.js';
 import { gatherFiles } from './gatherFiles.js';
 import { getMachOArchs } from './sortMachOFiles.js';
 import { ERROR_NAMES } from './errorTypes.js';
+import { Readable } from 'stream';
 
 const dsymDocsLink = 'https://developer.apple.com/documentation/xcode/building-your-app-to-include-debugging-information/';
 const fileCountError = `No debug information files found
@@ -76,7 +77,7 @@ export const uploadMachO = async (args) => {
       file_format: fileFormat,
     };
     const metaFileData = {
-      contents: JSON.stringify(meta),
+      contents: Readable.from(JSON.stringify(meta)),
       data: { filepath: metaFilePath, release },
       maxRetries: args['max-retries'],
       maxRetryDelay: args['max-retry-delay'],
