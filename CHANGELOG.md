@@ -9,3 +9,6 @@
 
 # 0.14.1
 - Adds support for uploading React Native sourcemap files from the `upload` command
+
+# 0.15.0
+- Adds support for Node 18+ and removes support for versions prior to Node 10
