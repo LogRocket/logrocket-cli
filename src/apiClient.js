@@ -1,5 +1,12 @@
-import 'isomorphic-fetch';
+import nodeFetch from 'node-fetch';
 import { version as cliVersion } from '../package.json';
+
+if (!global.fetch) {
+  global.fetch = module.exports;
+  global.Response = nodeFetch.Response;
+  global.Headers = nodeFetch.Headers;
+  global.Request = nodeFetch.Request;
+}
 
 const delay = t => new Promise(resolve => setTimeout(resolve, t));
 
