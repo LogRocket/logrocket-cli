@@ -1,4 +1,4 @@
-import 'isomorphic-fetch';
+import fetch from './fetch';
 import { version as cliVersion } from '../package.json';
 
 const delay = t => new Promise(resolve => setTimeout(resolve, t));
