@@ -527,7 +527,7 @@ describe('CLI dispatch tests', function cliTests() {
   describe('upload-mobile', () => {
     it('should show the upload-mobile help', mochaAsync(async () => {
       const result = await executeCommand('upload-mobile --help');
-      expect(result.stdout).to.contain('Usage: logrocket [-k <apikey>] upload-mobile [-r <release>] [-p <platform>] <paths..>');
+      expect(result.stdout.replace(/\n/g, ' ')).to.contain('Usage: logrocket [-k <apikey>] upload-mobile [-r <release>] [-p <platform>] <paths..>');
     }));
 
     it('should error if no platform is provided', mochaAsync(async () => {
