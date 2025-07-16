@@ -19,7 +19,8 @@
   "scripts": {
     "lint": "eslint src/",
     "prebuild": "rm -rf dist",
-    "build": "babel src --out-dir dist --ignore \"src/__specs__/*\"",
+    "build": "babel src --out-dir dist",
+    "prepublish": "rm -rf dist/__specs__",
     "test:mocha": "mocha --opts test/mocha.opts dist/**/*.spec.js",
     "test": "npm run build && npm run test:mocha"
   },
