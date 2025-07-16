@@ -12,3 +12,6 @@
 
 # 0.15.0
 - Adds support for Node 18+ and removes support for versions prior to Node 10
+
+# 0.15.1
+- Update dependencies to address reported vulnerabilities
