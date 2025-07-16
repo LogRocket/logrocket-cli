@@ -18,7 +18,8 @@
   },
   "scripts": {
     "lint": "eslint src/",
-    "build": "babel src --out-dir dist",
+    "prebuild": "rm -rf dist",
+    "build": "babel src --out-dir dist --ignore \"src/__specs__/*\"",
     "test:mocha": "mocha --opts test/mocha.opts dist/**/*.spec.js",
     "test": "npm run build && npm run test:mocha"
   },
