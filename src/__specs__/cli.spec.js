@@ -456,7 +456,7 @@ describe('CLI dispatch tests', function cliTests() {
     ]);
   }));
 
-  it.only('should correctly encode a URL-unsafe release string', mochaAsync(async () => {
+  it('should correctly encode a URL-unsafe release string', mochaAsync(async () => {
     addCliStatusMessage();
 
     const urlUnsafeRelease = '1.0.2#dev:1234-1234-1234';
