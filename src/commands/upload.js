@@ -73,7 +73,7 @@ export const handler = async (args) => {
       data: { filepath },
       maxRetries: args['max-retries'],
       maxRetryDelay: args['max-retry-delay'],
-      url: `releases/${release}/artifacts`,
+      url: `releases/${encodeURIComponent(release)}/artifacts`,
     };
 
     try {
