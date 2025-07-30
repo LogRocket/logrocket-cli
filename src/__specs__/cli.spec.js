@@ -48,7 +48,7 @@ describe('CLI dispatch tests', function cliTests() {
     addExpectRequest(`/upload/${uploadID}`, { status: 200 });
   };
 
-  const addArtifactRequest = () => addUploadRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/');
+  const addArtifactRequest = (release = '1.0.2') => addUploadRequest(`/v1/orgs/org/apps/app/releases/${encodeURIComponent(release)}/artifacts/`);
 
   const addReleaseArtifactRequest = () => addUploadRequest('/v1/orgs/org/apps/app/release-artifacts/');
 
@@ -70,6 +70,7 @@ describe('CLI dispatch tests', function cliTests() {
       const simplifiedRequest = {
         method: req.method,
         body: req.body,
+        url: req.url,
       };
       if (req.headers && req.headers.authorization) {
         simplifiedRequest.headers = { authorization: req.headers.authorization };
@@ -453,6 +454,21 @@ describe('CLI dispatch tests', function cliTests() {
         body: '\'two jsx contents\';\n',
       },
     ]);
+  }));
+
+  it.only('should correctly encode a URL-unsafe release string', mochaAsync(async () => {
+    addCliStatusMessage();
+
+    const urlUnsafeRelease = '1.0.2#dev:1234-1234-1234';
+
+    addArtifactRequest(urlUnsafeRelease);
+
+    const result = await executeCommand(`upload -k org:app:secret -r "${urlUnsafeRelease}" --apihost="http://localhost:8818" ${FIXTURE_PATH}subdir/one.js`);
+
+    expect(result.err).to.be.null();
+    expect(result.stdout).to.contain('Found 1 file');
+
+    expect(matchedRequests[1].url).to.include(encodeURIComponent(urlUnsafeRelease));
   }));
 
   it('should error if the server ping fails', mochaAsync(async () => {
