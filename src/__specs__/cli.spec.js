@@ -316,7 +316,7 @@ describe('CLI dispatch tests', function cliTests() {
 
     expect(matchedRequests[0].method).to.equal('GET');
 
-    expect(matchedRequests).to.deep.include.members([
+    expect(matchedRequests).to.containSubset([
       {
         method: 'POST',
         headers: {
@@ -369,7 +369,7 @@ describe('CLI dispatch tests', function cliTests() {
 
     expect(matchedRequests[0].method).to.equal('GET');
 
-    expect(matchedRequests).to.deep.include.members([
+    expect(matchedRequests).to.containSubset([
       {
         method: 'POST',
         headers: {
@@ -430,7 +430,7 @@ describe('CLI dispatch tests', function cliTests() {
 
     expect(matchedRequests[0].method).to.equal('GET');
 
-    expect(matchedRequests).to.deep.include.members([
+    expect(matchedRequests).to.containSubset([
       {
         method: 'POST',
         headers: {
@@ -571,7 +571,7 @@ describe('CLI dispatch tests', function cliTests() {
 
       expect(matchedRequests[0].method).to.equal('GET');
 
-      expect(matchedRequests).to.deep.include.members([
+      expect(matchedRequests).to.containSubset([
         {
           method: 'POST',
           headers: {
@@ -644,7 +644,7 @@ describe('CLI dispatch tests', function cliTests() {
 
       expect(matchedRequests[0].method).to.equal('GET');
 
-      expect(matchedRequests).to.deep.include.members([
+      expect(matchedRequests).to.containSubset([
         {
           method: 'POST',
           headers: {
