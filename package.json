@@ -40,6 +40,7 @@
     "babel-preset-es2015": "^6.13.2",
     "babel-preset-stage-3": "^6.17.0",
     "chai": "^3.5.0",
+    "chai-subset": "^1.6.0",
     "dirty-chai": "^1.2.2",
     "eslint": "^3.8.1",
     "eslint-config-airbnb": "^12.0.0",

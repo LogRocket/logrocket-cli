@@ -1,7 +1,9 @@
 import chai from 'chai';
 import dirtyChai from 'dirty-chai';
+import chaiSubset from 'chai-subset';
 
 chai.use(dirtyChai);
+chai.use(chaiSubset);
 chai.config.includeStack = true;
 
 // provide expect globally for ergonomics
