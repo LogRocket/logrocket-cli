@@ -15,3 +15,6 @@
 
 # 0.15.1
 - Update dependencies to address reported vulnerabilities
+
+# 0.15.2
+- Support artifact uploads for Expo-specific releases
