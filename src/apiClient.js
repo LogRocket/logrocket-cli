@@ -46,7 +46,19 @@ class ApiClient {
   }
 
   async _makeRequest({ url, data }) {
-    const [orgSlug, appSlug] = this.apikey.split(':');
+    const parts = this.apikey.split(':');
+
+    let orgSlug;
+    let appSlug;
+    if (parts.length === 4) {
+      [, orgSlug, appSlug] = parts;
+    } else if (parts.length === 3) {
+      [orgSlug, appSlug] = parts;
+    } else {
+      throw new Error(
+        'Invalid API key format: expected org:app:secret or pat:org:app:secret',
+      );
+    }
 
     return fetch(`${this.apihost}/v1/orgs/${orgSlug}/apps/${appSlug}/${url}/`, {
       method: 'POST',
