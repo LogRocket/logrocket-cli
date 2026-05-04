@@ -18,3 +18,6 @@
 
 # 0.15.2
 - Support artifact uploads for Expo-specific releases
+
+# 0.16.0
+- Add support for new API keys (personal access tokens)

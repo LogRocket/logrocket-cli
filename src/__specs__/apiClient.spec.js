@@ -54,4 +54,22 @@ describe('CLI apiClient tests', () => {
     const gCloud = fetchMock.lastOptions('gcloud');
     expect(gCloud.body).to.equal('stuff!');
   }));
+
+  it('should handle pats', mochaAsync(async () => {
+    const patClient = apiClient({
+      apikey: 'pat:myorg:myapp:secret',
+      apihost: 'https://example.com',
+    });
+
+    fetchMock.post(
+      'https://example.com/v1/orgs/myorg/apps/myapp/releases/',
+      () => 200,
+    );
+
+    await patClient.createRelease({ version: '1.0.0' });
+
+    expect(fetchMock.calls().matched).to.have.length(1);
+    const opts = fetchMock.lastCall()[1];
+    expect(opts.headers).to.have.property('Authorization', 'Token pat:myorg:myapp:secret');
+  }));
 });
