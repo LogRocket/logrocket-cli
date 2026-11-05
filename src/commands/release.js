@@ -16,10 +16,16 @@ export const builder = (args) => {
     .help();
 };
 
-export const handler = async ({ version, strict, apikey, apihost, verbose }) => {
+export const handler = async (args) => {
+  const { version, strict, apikey, apihost, verbose } = args;
   console.info(`Creating release: ${version} ...`);
 
-  const client = apiClient({ apikey, apihost });
+  const client = apiClient({
+    apikey,
+    apihost,
+    maxRetries: args['max-retries'],
+    maxRetryDelay: args['max-retry-delay'],
+  });
   await client.checkStatus();
 
   const res = await client.createRelease({ version });

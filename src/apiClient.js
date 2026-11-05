@@ -5,35 +5,41 @@ const delay = t => new Promise(resolve => setTimeout(resolve, t));
 
 const RETRY_STATUS = [429, 500, 502, 503, 504];
 
-async function retryableFetch(url, { maxRetries, maxRetryDelay, ...options }) {
-  let result = await fetch(url, options);
+// A stream body can only be sent once; pass a function that returns a new stream per attempt.
+async function retryableFetch(url, { maxRetries, maxRetryDelay, body, ...options }) {
+  for (let attempt = 0; ; attempt++) {
+    let result;
+    let error;
 
-  if (result.ok || !RETRY_STATUS.includes(result.status)) {
-    return result;
-  }
-
-  for (let currentRetry = 0; currentRetry < maxRetries; currentRetry++) {
-    const jitterMs = Math.round(Math.random() * 1000);
-    const wait = Math.min(maxRetryDelay, Math.pow(2, currentRetry) * 1000) + jitterMs;
-    await delay(wait);
-
-    result = await fetch(url, options);
-
-    if (result.ok || !RETRY_STATUS.includes(result.status)) {
-      break;
+    try {
+      result = await fetch(url, { ...options, body: typeof body === 'function' ? body() : body });
+    } catch (err) {
+      error = err;
     }
-  }
 
-  return result;
+    const retryable = error !== undefined || RETRY_STATUS.includes(result.status);
+    if (!retryable || attempt >= maxRetries) {
+      if (error !== undefined) {
+        throw error;
+      }
+      return result;
+    }
+
+    const jitterMs = Math.round(Math.random() * 1000);
+    await delay(Math.min(maxRetryDelay, Math.pow(2, attempt) * 1000) + jitterMs);
+  }
 }
 
 class ApiClient {
   constructor({
     apikey,
     apihost = 'https://api.logrocket.com',
+    maxRetries = 3,
+    maxRetryDelay = 30000,
   }) {
     this.apikey = apikey;
     this.apihost = apihost;
+    this.retry = { maxRetries, maxRetryDelay };
   }
 
   get headers() {
@@ -60,7 +66,8 @@ class ApiClient {
       );
     }
 
-    return fetch(`${this.apihost}/v1/orgs/${orgSlug}/apps/${appSlug}/${url}/`, {
+    return retryableFetch(`${this.apihost}/v1/orgs/${orgSlug}/apps/${appSlug}/${url}/`, {
+      ...this.retry,
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify(data),
@@ -69,7 +76,8 @@ class ApiClient {
   }
 
   async checkStatus() {
-    const res = await fetch(`${this.apihost}/cli/status/`, {
+    const res = await retryableFetch(`${this.apihost}/cli/status/`, {
+      ...this.retry,
       headers: this.headers,
     });
 
@@ -101,9 +109,7 @@ class ApiClient {
     });
   }
 
-  async uploadFile({
-    contents, data, maxRetries, maxRetryDelay, url,
-  }) {
+  async uploadFile({ contents, data, url }) {
     const res = await this._makeRequest({ url, data });
     if (!res.ok) {
       return res;
@@ -117,8 +123,7 @@ class ApiClient {
     }
 
     const result = await retryableFetch(gcloudUrl, {
-      maxRetries,
-      maxRetryDelay,
+      ...this.retry,
       method: 'PUT',
       body: contents,
       duplex: 'half',
