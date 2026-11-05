@@ -90,7 +90,7 @@ class ApiClient {
     try {
       data = await res.json();
     } catch (err) {
-      console.error('Could not verify CLI status. Check your network connection and reinstall the LogRocket CLI if the problem persists.');
+      console.error(`Could not verify CLI status (HTTP ${res.status}). Check your network connection and reinstall the LogRocket CLI if the problem persists.`);
       process.exit(1);
     }
 
