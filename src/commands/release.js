@@ -8,7 +8,7 @@ export const builder = (args) => {
     .usage('\nUsage: logrocket release [--strict] <version>')
     .option('strict', {
       type: 'bool',
-      describe: 'Fail on duplicate releases',
+      describe: 'Fail on duplicate releases (a retried request can fail if an earlier attempt created the release)',
       default: false,
     })
     .string('_')

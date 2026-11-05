@@ -250,6 +250,19 @@ describe('CLI dispatch tests', function cliTests() {
     expect(unmatchedRequests).to.have.length(0);
   }));
 
+  it('should error on a 409 after a retried release in strict mode', mochaAsync(async () => {
+    addCliStatusMessage();
+    addExpectRequest('/v1/orgs/org/apps/app/releases/', { status: 502 });
+    addExpectRequest('/v1/orgs/org/apps/app/releases/', { status: 409 });
+
+    const result = await executeCommand('release -k org:app:secret --strict --max-retry-delay 100 --apihost="http://localhost:8818" 1.0.3');
+
+    expect(result.err.code).to.equal(1);
+    expect(result.stderr).to.contain('Release already exists');
+    expect(matchedRequests).to.have.length(3);
+    expect(unmatchedRequests).to.have.length(0);
+  }));
+
   it('should error if the server returns a 400', mochaAsync(async () => {
     addCliStatusMessage();
     addExpectRequest('/v1/orgs/org/apps/app/releases/', { status: 400 });
