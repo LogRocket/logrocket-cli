@@ -46,7 +46,12 @@ export const uploadMachO = async (args) => {
   console.info(`Preparing to upload debug file(s) for release ${release} ...`);
   console.info('Gathering file list...');
 
-  const client = apiClient({ apikey, apihost });
+  const client = apiClient({
+    apikey,
+    apihost,
+    maxRetries: args['max-retries'],
+    maxRetryDelay: args['max-retry-delay'],
+  });
   await client.checkStatus();
 
   if (args['gcs-token']) {
@@ -63,10 +68,8 @@ export const uploadMachO = async (args) => {
 
     const debugFilePath = `${containerDirectory}/debuginfo`;
     const debugFileData = {
-      contents: createReadStream(path),
+      contents: () => createReadStream(path),
       data: { filepath: debugFilePath, release },
-      maxRetries: args['max-retries'],
-      maxRetryDelay: args['max-retry-delay'],
       url: 'release-artifacts',
     };
 
@@ -77,10 +80,8 @@ export const uploadMachO = async (args) => {
       file_format: fileFormat,
     };
     const metaFileData = {
-      contents: Readable.from(JSON.stringify(meta)),
+      contents: () => Readable.from(JSON.stringify(meta)),
       data: { filepath: metaFilePath, release },
-      maxRetries: args['max-retries'],
-      maxRetryDelay: args['max-retry-delay'],
       url: 'release-artifacts',
     };
 

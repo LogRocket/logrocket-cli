@@ -21,6 +21,18 @@ yargs // eslint-disable-line no-unused-expressions
     type: 'string',
     describe: false,
   })
+  .option('max-retries', {
+    type: 'number',
+    describe: 'Failed request retry limit (0 disables)',
+    default: 3,
+    global: true,
+  })
+  .option('max-retry-delay', {
+    type: 'number',
+    describe: 'Maximum delay between retries in ms',
+    default: 30000,
+    global: true,
+  })
   .option('v', { // for debugging
     alias: 'verbose',
     boolean: true,

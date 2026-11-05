@@ -17,7 +17,12 @@ export const uploadProguard = async (args) => {
 
   console.info(`Preparing to upload ProGuard mapping for release ${release} ...`);
 
-  const client = apiClient({ apikey, apihost });
+  const client = apiClient({
+    apikey,
+    apihost,
+    maxRetries: args['max-retries'],
+    maxRetryDelay: args['max-retry-delay'],
+  });
   await client.checkStatus();
 
   if (args['gcs-token']) {
@@ -44,10 +49,8 @@ export const uploadProguard = async (args) => {
   }
 
   const data = {
-    contents: createReadStream(path),
+    contents: () => createReadStream(path),
     data: { filepath: 'mapping.txt', release },
-    maxRetries: args['max-retries'],
-    maxRetryDelay: args['max-retry-delay'],
     url: 'release-artifacts',
   };
 

@@ -21,3 +21,9 @@
 
 # 0.16.0
 - Add support for new API keys (personal access tokens)
+
+# 0.17.0
+- Re-enable retries, which were disabled in 0.15.0. Failed requests now retry 3 times by default. Use `--max-retries 0` to disable retries.
+- Retries apply to all requests to LogRocket (status check, release creation, and artifact uploads), not only to file uploads. Network errors also retry.
+- `max-retries` and `max-retry-delay` are now global options. They work with all commands, and you can set them with the `LOGROCKET_MAX_RETRIES` and `LOGROCKET_MAX_RETRY_DELAY` environment variables.
+- Note for `release --strict`: if a request fails but the server created the release, the retry gets a 409 and the command fails with "Release already exists". If you use `--strict` in a build script, make sure that the script can handle this failure, or use `--max-retries 0`.
