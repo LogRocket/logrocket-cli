@@ -53,7 +53,7 @@ jobs:
           name: Publish to NPM
           command: |
             export NPM_ID_TOKEN=$(circleci run oidc get --claims '{"aud": "npm:registry.npmjs.org"}')
-            npm --stage publish --tag beta
+            npm stage publish --tag beta
 
 workflows:
   build-deploy:
