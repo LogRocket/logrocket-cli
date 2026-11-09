@@ -1,8 +1,8 @@
-version: 2
+version: 2.1
 
 defaults: &defaults
   docker:
-    - image: cimg/node:18.20.4
+    - image: cimg/node:26.13.0
 
 jobs:
   build:
@@ -28,11 +28,9 @@ jobs:
             echo "source ~/.nvm/nvm.sh --no-use" >> $BASH_ENV
       - run: nvm install 10 && nvm use 10 && npm run test:mocha
       - run: rm -rf dist/__specs__
-      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> .npmrc
       - persist_to_workspace:
           root: ~/project
-          paths: 
-            - .npmrc
+          paths:
             - dist
   deploy:
     <<: *defaults
@@ -40,17 +38,24 @@ jobs:
       - checkout
       - attach_workspace:
           at: ~/project
-      - run: npm publish
+      - run:
+          name: Publish to NPM
+          command: |
+            export NPM_ID_TOKEN=$(circleci run oidc get --claims '{"aud": "npm:registry.npmjs.org"}')
+            npm publish
   deploy-beta:
     <<: *defaults
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
-      - run: npm publish --tag beta
+      - run:
+          name: Publish to NPM
+          command: |
+            export NPM_ID_TOKEN=$(circleci run oidc get --claims '{"aud": "npm:registry.npmjs.org"}')
+            npm publish --tag beta
 
 workflows:
-  version: 2
   build-deploy:
     jobs:
       - build:
