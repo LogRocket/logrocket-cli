@@ -43,17 +43,6 @@ jobs:
           command: |
             export NPM_ID_TOKEN=$(circleci run oidc get --claims '{"aud": "npm:registry.npmjs.org"}')
             npm stage publish
-  deploy-beta:
-    <<: *defaults
-    steps:
-      - checkout
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Publish to NPM
-          command: |
-            export NPM_ID_TOKEN=$(circleci run oidc get --claims '{"aud": "npm:registry.npmjs.org"}')
-            npm stage publish --tag beta
 
 workflows:
   build-deploy:
@@ -68,13 +57,5 @@ workflows:
           filters:
             tags:
               only: /release-[0-9]+\.[0-9]+\.[0-9]+/
-            branches:
-              ignore: /.*/
-      - deploy-beta:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /beta-[0-9]+\.[0-9]+\.[0-9]+/
             branches:
               ignore: /.*/
