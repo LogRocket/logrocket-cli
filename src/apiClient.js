@@ -6,7 +6,9 @@ const delay = t => new Promise(resolve => setTimeout(resolve, t));
 const RETRY_STATUS = [429, 500, 502, 503, 504];
 
 // A stream body can only be sent once; pass a function that returns a new stream per attempt.
-async function retryableFetch(url, { maxRetries, maxRetryDelay, body, ...options }) {
+async function retryableFetch(url, {
+  maxRetries, maxRetryDelay, verbose, body, ...options
+}) {
   for (let attempt = 0; ; attempt++) {
     let result;
     let error;
@@ -17,7 +19,9 @@ async function retryableFetch(url, { maxRetries, maxRetryDelay, body, ...options
       error = err;
     }
 
-    const retryable = error !== undefined || RETRY_STATUS.includes(result.status);
+    const retryable = error !== undefined
+      ? Boolean((error.cause && error.cause.code) || error.code)
+      : RETRY_STATUS.includes(result.status);
     if (!retryable || attempt >= maxRetries) {
       if (error !== undefined) {
         throw error;
@@ -26,7 +30,18 @@ async function retryableFetch(url, { maxRetries, maxRetryDelay, body, ...options
     }
 
     const jitterMs = Math.round(Math.random() * 1000);
-    await delay(Math.min(maxRetryDelay, Math.pow(2, attempt) * 1000) + jitterMs);
+    const waitMs = Math.min(maxRetryDelay, Math.pow(2, attempt) * 1000) + jitterMs;
+
+    if (verbose) {
+      // Signed upload URLs carry credentials in the query string.
+      const { origin, pathname } = new URL(url);
+      const reason = error !== undefined
+        ? (error.cause && (error.cause.message || error.cause.code)) || error.code
+        : `HTTP ${result.status}`;
+      console.warn(`Request to ${origin}${pathname} failed (${reason}), retrying in ${(waitMs / 1000).toFixed(1)}s (retry ${attempt + 1} of ${maxRetries})`);
+    }
+
+    await delay(waitMs);
   }
 }
 
@@ -36,10 +51,11 @@ class ApiClient {
     apihost = 'https://api.logrocket.com',
     maxRetries = 3,
     maxRetryDelay = 30000,
+    verbose = false,
   }) {
     this.apikey = apikey;
     this.apihost = apihost;
-    this.retry = { maxRetries, maxRetryDelay };
+    this.retry = { maxRetries, maxRetryDelay, verbose };
   }
 
   get headers() {

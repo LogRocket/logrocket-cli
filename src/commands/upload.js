@@ -48,6 +48,7 @@ export const handler = async (args) => {
     apihost,
     maxRetries: args['max-retries'],
     maxRetryDelay: args['max-retry-delay'],
+    verbose,
   });
   await client.checkStatus();
 

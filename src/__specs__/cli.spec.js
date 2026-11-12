@@ -494,6 +494,13 @@ describe('CLI dispatch tests', function cliTests() {
     expect(result.stderr).to.contain('Some error to show');
   }));
 
+  it('should show the cause of a network error', mochaAsync(async () => {
+    const result = await executeCommand('release -k org:app:secret --max-retries 0 --apihost="http://localhost:59999" 1.0.3');
+
+    expect(result.err.code).to.equal(1);
+    expect(result.stderr).to.contain('ECONNREFUSED');
+  }));
+
   it('should retry failed uploads', mochaAsync(async () => {
     addCliStatusMessage();
 

@@ -1,7 +1,8 @@
 import yargs from 'yargs';
 
 process.on('unhandledRejection', (err) => {
-  console.error(err.message);
+  const cause = err.cause && (err.cause.message || err.cause.code);
+  console.error(cause ? `${err.message}: ${cause}` : err.message);
   process.exit(1);
 });
 
