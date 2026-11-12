@@ -250,6 +250,19 @@ describe('CLI dispatch tests', function cliTests() {
     expect(unmatchedRequests).to.have.length(0);
   }));
 
+  it('should error on a 409 after a retried release in strict mode', mochaAsync(async () => {
+    addCliStatusMessage();
+    addExpectRequest('/v1/orgs/org/apps/app/releases/', { status: 502 });
+    addExpectRequest('/v1/orgs/org/apps/app/releases/', { status: 409 });
+
+    const result = await executeCommand('release -k org:app:secret --strict --max-retry-delay 100 --apihost="http://localhost:8818" 1.0.3');
+
+    expect(result.err.code).to.equal(1);
+    expect(result.stderr).to.contain('Release already exists');
+    expect(matchedRequests).to.have.length(3);
+    expect(unmatchedRequests).to.have.length(0);
+  }));
+
   it('should error if the server returns a 400', mochaAsync(async () => {
     addCliStatusMessage();
     addExpectRequest('/v1/orgs/org/apps/app/releases/', { status: 400 });
@@ -481,8 +494,14 @@ describe('CLI dispatch tests', function cliTests() {
     expect(result.stderr).to.contain('Some error to show');
   }));
 
-  // retries temporarily unsupported
-  it.skip('should retry failed uploads', mochaAsync(async () => {
+  it('should show the cause of a network error', mochaAsync(async () => {
+    const result = await executeCommand('release -k org:app:secret --max-retries 0 --apihost="http://localhost:59999" 1.0.3');
+
+    expect(result.err.code).to.equal(1);
+    expect(result.stderr).to.contain('ECONNREFUSED');
+  }));
+
+  it('should retry failed uploads', mochaAsync(async () => {
     addCliStatusMessage();
 
     addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {
@@ -512,8 +531,82 @@ describe('CLI dispatch tests', function cliTests() {
     expect(unmatchedRequests).to.have.length(0);
   }));
 
-  // retries temporarily unsupported
-  it.skip('should stop retrying after the configured maximum', mochaAsync(async () => {
+  it('should retry a failed artifact request', mochaAsync(async () => {
+    addCliStatusMessage();
+
+    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', { status: 502 });
+    addArtifactRequest();
+
+    const result = await executeCommand([
+      'upload',
+      '-k org:app:secret',
+      '-r 1.0.2',
+      '--apihost="http://localhost:8818"',
+      '--max-retry-delay 100',
+      `${FIXTURE_PATH}subdir/one.js`,
+    ]);
+
+    expect(result.err).to.be.null();
+    expect(matchedRequests).to.have.length(4);
+    expect(matchedRequests[3].body).to.equal("'one js contents';\n");
+    expect(unmatchedRequests).to.have.length(0);
+  }));
+
+  it('should retry a failed status check', mochaAsync(async () => {
+    addCliStatusMessage({ status: 502 });
+    addCliStatusMessage();
+    addArtifactRequest();
+
+    const result = await executeCommand([
+      'upload',
+      '-k org:app:secret',
+      '-r 1.0.2',
+      '--apihost="http://localhost:8818"',
+      '--max-retry-delay 100',
+      `${FIXTURE_PATH}subdir/one.js`,
+    ]);
+
+    expect(result.err).to.be.null();
+    expect(matchedRequests).to.have.length(4);
+    expect(unmatchedRequests).to.have.length(0);
+  }));
+
+  it('should error on a non-number max-retries', mochaAsync(async () => {
+    const result = await executeCommand('release -k org:app:secret --max-retries abc --apihost="http://localhost:8818" 1.0.3');
+
+    expect(result.err.code).to.equal(1);
+    expect(result.stderr).to.contain('--max-retries must be a number');
+    expect(matchedRequests).to.have.length(0);
+    expect(unmatchedRequests).to.have.length(0);
+  }));
+
+  it('should error on a non-number max-retry-delay', mochaAsync(async () => {
+    const result = await executeCommand('release -k org:app:secret --max-retry-delay abc --apihost="http://localhost:8818" 1.0.3');
+
+    expect(result.err.code).to.equal(1);
+    expect(result.stderr).to.contain('--max-retry-delay must be a number');
+    expect(matchedRequests).to.have.length(0);
+  }));
+
+  it('should not retry when retries are disabled', mochaAsync(async () => {
+    addCliStatusMessage();
+    addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', { status: 502 });
+
+    const result = await executeCommand([
+      'upload',
+      '-k org:app:secret',
+      '-r 1.0.2',
+      '--apihost="http://localhost:8818"',
+      '--max-retries 0',
+      `${FIXTURE_PATH}subdir/one.js`,
+    ]);
+
+    expect(result.err.message).to.contain('Failed to upload: one.js');
+    expect(matchedRequests).to.have.length(2);
+    expect(unmatchedRequests).to.have.length(0);
+  }));
+
+  it('should stop retrying after the configured maximum', mochaAsync(async () => {
     addCliStatusMessage();
 
     addExpectRequest('/v1/orgs/org/apps/app/releases/1.0.2/artifacts/', {

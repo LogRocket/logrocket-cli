@@ -44,16 +44,6 @@ export const builder = (args) => {
       'gcs-token': 'gcs-bucket',
       'gcs-bucket': 'gcs-token',
     })
-    .option('max-retries', {
-      type: 'number',
-      describe: 'Failed upload retry limit (0 disables)',
-      default: 0,
-    })
-    .option('max-retry-delay', {
-      type: 'number',
-      describe: 'Maximum delay between retries in ms',
-      default: 30000,
-    })
     .help('help');
 };
 

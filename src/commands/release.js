@@ -8,7 +8,7 @@ export const builder = (args) => {
     .usage('\nUsage: logrocket release [--strict] <version>')
     .option('strict', {
       type: 'bool',
-      describe: 'Fail on duplicate releases',
+      describe: 'Fail on duplicate releases (a retried request can fail if an earlier attempt created the release)',
       default: false,
     })
     .string('_')
@@ -16,10 +16,17 @@ export const builder = (args) => {
     .help();
 };
 
-export const handler = async ({ version, strict, apikey, apihost, verbose }) => {
+export const handler = async (args) => {
+  const { version, strict, apikey, apihost, verbose } = args;
   console.info(`Creating release: ${version} ...`);
 
-  const client = apiClient({ apikey, apihost });
+  const client = apiClient({
+    apikey,
+    apihost,
+    maxRetries: args['max-retries'],
+    maxRetryDelay: args['max-retry-delay'],
+    verbose,
+  });
   await client.checkStatus();
 
   const res = await client.createRelease({ version });

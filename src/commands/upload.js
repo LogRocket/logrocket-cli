@@ -34,16 +34,6 @@ export const builder = (args) => {
       'gcs-token': 'gcs-bucket',
       'gcs-bucket': 'gcs-token',
     })
-    .option('max-retries', {
-      type: 'number',
-      describe: 'Failed upload retry limit (0 disables)',
-      default: 0,
-    })
-    .option('max-retry-delay', {
-      type: 'number',
-      describe: 'Maximum delay between retries in ms',
-      default: 30000,
-    })
     .help('help');
 };
 
@@ -53,7 +43,13 @@ export const handler = async (args) => {
   console.info(`Preparing to upload sourcemaps for release ${release} ...`);
   console.info('Gathering file list...');
 
-  const client = apiClient({ apikey, apihost });
+  const client = apiClient({
+    apikey,
+    apihost,
+    maxRetries: args['max-retries'],
+    maxRetryDelay: args['max-retry-delay'],
+    verbose,
+  });
   await client.checkStatus();
 
   if (args['gcs-token']) {
@@ -69,10 +65,8 @@ export const handler = async (args) => {
     const filepath = `${urlPrefix.replace(/\/$/, '')}/${name}`;
 
     const data = {
-      contents: createReadStream(path),
+      contents: () => createReadStream(path),
       data: { filepath },
-      maxRetries: args['max-retries'],
-      maxRetryDelay: args['max-retry-delay'],
       url: `releases/${encodeURIComponent(release)}/artifacts`,
     };
 
