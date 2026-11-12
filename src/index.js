@@ -6,6 +6,15 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
+// yargs 6 passes the raw string to coerce, before the number conversion.
+const requireNumber = name => (value) => {
+  const number = Number(value);
+  if (Number.isNaN(number)) {
+    throw new Error(`--${name} must be a number`);
+  }
+  return number;
+};
+
 yargs // eslint-disable-line no-unused-expressions
   .usage('\nUsage: logrocket [-k <apikey>] <command> [<args>]')
   .env('LOGROCKET')
@@ -27,12 +36,14 @@ yargs // eslint-disable-line no-unused-expressions
     describe: 'Failed request retry limit (0 disables)',
     default: 3,
     global: true,
+    coerce: requireNumber('max-retries'),
   })
   .option('max-retry-delay', {
     type: 'number',
     describe: 'Maximum delay between retries in ms',
     default: 30000,
     global: true,
+    coerce: requireNumber('max-retry-delay'),
   })
   .option('v', { // for debugging
     alias: 'verbose',

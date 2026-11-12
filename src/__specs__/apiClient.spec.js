@@ -97,6 +97,25 @@ describe('CLI apiClient tests', () => {
     expect(fetchMock.calls().matched).to.have.length(1);
   }));
 
+  it('should not retry an invalid URL', mochaAsync(async () => {
+    const retryClient = apiClient({ apikey: 'org:app:key', apihost: 'http://example.com', maxRetryDelay: 1 });
+    const cause = new TypeError('Invalid URL');
+    cause.code = 'ERR_INVALID_URL';
+    fetchMock.post('http://example.com/v1/orgs/org/apps/app/releases/', {
+      throws: fetchError(cause),
+    });
+
+    let error;
+    try {
+      await retryClient.createRelease({ version: '1.0.2' });
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error.cause.code).to.equal('ERR_INVALID_URL');
+    expect(fetchMock.calls().matched).to.have.length(1);
+  }));
+
   it('should handle pats', mochaAsync(async () => {
     const patClient = apiClient({
       apikey: 'pat:myorg:myapp:secret',

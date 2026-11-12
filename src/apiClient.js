@@ -19,8 +19,9 @@ async function retryableFetch(url, {
       error = err;
     }
 
+    const errorCode = error !== undefined && ((error.cause && error.cause.code) || error.code);
     const retryable = error !== undefined
-      ? Boolean((error.cause && error.cause.code) || error.code)
+      ? Boolean(errorCode) && errorCode !== 'ERR_INVALID_URL'
       : RETRY_STATUS.includes(result.status);
     if (!retryable || attempt >= maxRetries) {
       if (error !== undefined) {
